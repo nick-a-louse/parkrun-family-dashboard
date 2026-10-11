@@ -117,3 +117,76 @@ def get(path: Path, scale: float = 1.0) -> Logo:
             _cache.clear()
             _cache[key] = build(path, scale)
         return _cache[key]
+
+
+# ---------------------------------------------------------------- icons
+
+ICON_SIZES = (32, 180, 192, 512)
+_icon_cache: dict[tuple, bytes] = {}
+
+
+def build_icon(path: Path, size: int) -> bytes:
+    """A square PNG icon at `size` px from any user-supplied image.
+
+    Trims surrounding empty space to a small even margin, and for small sizes
+    thickens thin line art so it stays visible once shrunk (a 664 px drawing with
+    8 px lines would otherwise fade to sub-pixel lines at 32 px).
+    """
+    from PIL import Image, ImageFilter
+
+    img = Image.open(path).convert("RGBA")
+    bg = _background(img)
+    if bg[3] < 250:  # transparent background: flatten onto white so tabs in any theme can see it
+        flat = Image.new("RGBA", img.size, (255, 255, 255, 255))
+        flat.alpha_composite(img)
+        img, bg = flat, (255, 255, 255, 255)
+    rgb = img.convert("RGB")
+
+    # Ink mask: pixels clearly different from the background
+    from PIL import ImageChops
+    diff = ImageChops.difference(rgb, Image.new("RGB", rgb.size, bg[:3])).convert("L")
+    ink = diff.point(lambda v: 255 if v > 60 else 0)
+    box = ink.getbbox()
+    if not box:
+        box = (0, 0, *rgb.size)
+
+    # Square crop around the content with a 6% margin
+    x0, y0, x1, y1 = box
+    side = int(max(x1 - x0, y1 - y0) * 1.12) or 1
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    canvas = Image.new("RGB", (side, side), bg[:3])
+    canvas.paste(rgb.crop((int(cx - side / 2), int(cy - side / 2), int(cx + side / 2), int(cy + side / 2))), (0, 0))
+    # paste of an out-of-bounds crop leaves black corners; refill them with the background
+    mask_out = Image.new("L", (side, side), 0)
+    mask_out.paste(255, (max(0, int(side / 2 - cx)), max(0, int(side / 2 - cy)),
+                         min(side, int(side / 2 - cx + rgb.size[0])), min(side, int(side / 2 - cy + rgb.size[1]))))
+    canvas = Image.composite(canvas, Image.new("RGB", (side, side), bg[:3]), mask_out)
+
+    # Estimate stroke width: ink area / half its outline length
+    cink = ImageChops.difference(canvas, Image.new("RGB", canvas.size, bg[:3])).convert("L").point(
+        lambda v: 255 if v > 60 else 0)
+    area = sum(1 for v in cink.getdata() if v)
+    edge = sum(1 for v in ImageChops.difference(cink, cink.filter(ImageFilter.MinFilter(3))).getdata() if v)
+    stroke = (2 * area / edge) if edge else side
+    scale = side / size
+    wanted = 1.6 * scale            # aim for lines ~1.6 px wide at the output size
+    if stroke < wanted and size <= 64:
+        grow = int(round((wanted - stroke) / 2)) * 2 + 1
+        ink_darker = sum(bg[:3]) > 380  # dark drawing on a light background
+        filt = ImageFilter.MinFilter(grow) if ink_darker else ImageFilter.MaxFilter(grow)
+        canvas = canvas.filter(filt)
+
+    out = canvas.resize((size, size), Image.LANCZOS)
+    buf = io.BytesIO()
+    out.save(buf, "PNG", optimize=True)
+    return buf.getvalue()
+
+
+def get_icon(path: Path, size: int) -> bytes:
+    key = (str(path), path.stat().st_mtime, size)
+    with _lock:
+        if key not in _icon_cache:
+            if len(_icon_cache) > 16:
+                _icon_cache.clear()
+            _icon_cache[key] = build_icon(path, size)
+        return _icon_cache[key]

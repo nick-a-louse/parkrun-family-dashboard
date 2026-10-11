@@ -64,7 +64,7 @@ Port 5062 on your LAN. For access away from home, use Tailscale to reach the ser
 Put image files next to `runners.yaml` (the `/config` folder) and restart the container:
 
 - `logo.png` (or `.svg`/`.webp`): shown in the header as "Our" followed by the logo. The app turns it into a cut-out painted in the page's text colour (so it follows light/dark mode), trims the empty space, and sizes it so the logo's lowercase letters match the height of "Our" and sit on the same baseline. A dark logo on a plain background works best. If it looks too big or small, set `LOGO_SCALE` (e.g. `1.2` or `0.9`) in `.env`. Without a logo the header reads "Our parkruns".
-- `icon.png` (or `.svg`/`.ico`): used as the browser tab icon and for home-screen shortcuts. Without it a built-in icon is used.
+- `icon.png` or `icon.jpg` (or `.svg`/`.ico`): the browser tab icon and home-screen icon. PNG/JPG icons are trimmed to a small margin, made square, and served at 32, 180, 192 and 512 px; thin line art is thickened at 32 px so it stays visible in a browser tab. Without it a built-in icon is used.
 
 The repo doesn't include any third-party logos; supply your own files.
 

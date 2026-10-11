@@ -35,6 +35,31 @@ def _wordmark(path):
     im.save(path)
 
 
+def _ring_icon(path):
+    """Thin dark circle on a big white square, like a line-art icon with lots of padding."""
+    from PIL import Image, ImageDraw
+    im = Image.new("RGB", (664, 664), "white")
+    ImageDraw.Draw(im).ellipse([132, 132, 532, 532], outline=(44, 36, 62), width=7)
+    im.save(path, quality=90)
+
+
+def test_icon_processing(tmp_path):
+    from app import branding
+    from PIL import Image
+    import io
+    _ring_icon(tmp_path / "icon.jpg")
+    small = Image.open(io.BytesIO(branding.build_icon(tmp_path / "icon.jpg", 32))).convert("L")
+    assert small.size == (32, 32)
+    # trimmed: the ring now reaches close to the edges (6% margin) instead of 20%
+    row = [small.getpixel((x, 16)) for x in range(32)]
+    first_dark = next(i for i, v in enumerate(row) if v < 160)
+    assert first_dark <= 3
+    # thickened: the ring is still clearly dark at 32 px, not a faint grey
+    assert min(row) < 110
+    big = Image.open(io.BytesIO(branding.build_icon(tmp_path / "icon.jpg", 512)))
+    assert big.size == (512, 512)
+
+
 def test_logo_processing(tmp_path):
     from app import branding
     from PIL import Image
@@ -61,15 +86,22 @@ def test_branding_files(env, fixtures):
     assert "Our parkruns</h1>" in page
     assert c.get("/favicon.ico").headers["content-type"].startswith("image/svg")   # built-in fallback
     _wordmark(env / "logo.png")
-    (env / "icon.png").write_bytes(b"\x89PNG\r\n\x1a\nicon")
+    _ring_icon(env / "icon.jpg")
     page = c.get("/").text
     assert 'class="brand-logo" role="img" aria-label="parkruns"' in page and "--logo-h:" in page
-    assert "/brand/icon?v=" in page
+    assert "/brand/icon-32.png?v=" in page and "?v=0" not in page
     mask = c.get("/brand/logo-mask.png")
     assert mask.status_code == 200 and mask.headers["content-type"] == "image/png"
-    assert c.get("/apple-touch-icon.png").content.endswith(b"icon")
+    from PIL import Image
+    import io
+    for path, size in [("/favicon.ico", 32), ("/brand/icon-32.png", 32), ("/apple-touch-icon.png", 180),
+                       ("/brand/icon-512.png", 512)]:
+        r = c.get(path)
+        assert r.headers["content-type"] == "image/png", path
+        assert Image.open(io.BytesIO(r.content)).size == (size, size)
+    assert c.get("/brand/icon-99.png").status_code == 404
     m = c.get("/manifest.webmanifest").json()
-    assert m["icons"][0]["type"] == "image/png"
+    assert [i["sizes"] for i in m["icons"]] == ["192x192", "512x512"]
 
 
 def test_grafana_setup(monkeypatch, capsys):

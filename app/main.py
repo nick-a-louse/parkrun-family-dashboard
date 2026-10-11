@@ -162,24 +162,45 @@ def create_app(settings=None, fetcher_factory=None) -> FastAPI:
             raise HTTPException(404, "No usable logo file in the config folder")
         return Response(info.png, media_type="image/png", headers={"Cache-Control": "max-age=3600"})
 
-    @app.get("/brand/icon")
-    @app.get("/favicon.ico")
-    @app.get("/apple-touch-icon.png")
-    def brand_icon():
+    def icon_response(size: int):
+        """Your icon trimmed, squared and made legible at `size` px; else the built-in one."""
         p = brand_file("icon")
+        headers = {"Cache-Control": "max-age=86400"}
+        if p and p.suffix.lower() in (".svg", ".ico"):
+            return FileResponse(p, headers=headers)          # already scalable / multi-size
         if p:
-            return FileResponse(p, headers={"Cache-Control": "max-age=3600"})
+            try:
+                return Response(branding.get_icon(p, size), media_type="image/png", headers=headers)
+            except Exception:
+                log.exception("Couldn't process the icon file %s", p)
         return FileResponse(HERE / "static" / "icon.svg", media_type="image/svg+xml")
+
+    @app.get("/brand/icon-{size}.png")
+    def brand_icon_sized(size: int):
+        if size not in branding.ICON_SIZES:
+            raise HTTPException(404, "Unknown icon size")
+        return icon_response(size)
+
+    @app.get("/favicon.ico")
+    def favicon():
+        return icon_response(32)
+
+    @app.get("/apple-touch-icon.png")
+    def apple_touch_icon():
+        return icon_response(180)
+
+    @app.get("/brand/icon")
+    def brand_icon():
+        return icon_response(192)
 
     @app.get("/manifest.webmanifest")
     def manifest():
-        p = brand_file("icon")
-        mime = {"svg": "image/svg+xml", "png": "image/png", "webp": "image/webp", "jpg": "image/jpeg",
-                "jpeg": "image/jpeg", "ico": "image/x-icon"}[p.suffix[1:]] if p else "image/svg+xml"
+        v = int(brand_file("icon").stat().st_mtime) if brand_file("icon") else 0
         return JSONResponse({
             "name": "Our parkruns", "short_name": "parkruns", "start_url": "/", "display": "standalone",
             "background_color": "#eef1ec", "theme_color": "#17231d",
-            "icons": [{"src": "/brand/icon", "sizes": "any", "type": mime, "purpose": "any"}],
+            "icons": [{"src": f"/brand/icon-{s}.png?v={v}", "sizes": f"{s}x{s}", "type": "image/png",
+                       "purpose": "any"} for s in (192, 512)],
         }, media_type="application/manifest+json")
 
     @app.get("/metrics")
