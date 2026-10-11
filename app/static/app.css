@@ -106,7 +106,10 @@ h1, h2, h3, h4, p, dl, dd, ol, ul { margin: 0; }
 /* ---------------------------------------------------------------- masthead */
 .masthead { padding: 20px 0 8px; }
 .masthead-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.brand { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+.brand { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: baseline; gap: 0.28em; }
+/* Sized so the logo's lettering sits at the same height as "Our": a logo image includes some
+   padding above and below its text, so it's set a little taller than the font's cap height. */
+.brand-logo { height: 1.15em; width: auto; align-self: center; position: relative; top: 0.04em; }
 .masthead-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .updated { color: var(--muted); font-size: 14px; margin-right: 4px; }
 .notice { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); font-size: 14px; }

@@ -9,7 +9,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -17,6 +17,7 @@ from . import __version__
 from .config import load_runners, load_settings
 from .db import Database
 from .exports import filtered, to_csv, to_json, to_xlsx
+from .metrics import render as render_metrics
 from .notify import Notifier
 from .parser import format_time
 from .scheduler import describe, start_scheduler
@@ -118,8 +119,57 @@ def create_app(settings=None, fetcher_factory=None) -> FastAPI:
         log_rows = db.query("SELECT * FROM fetch_log ORDER BY id DESC LIMIT 12")
         return templates.TemplateResponse(request, "index.html", {
             **view, "fetch_log": log_rows, "settings": settings, "distance_label": DISTANCE_LABEL,
+            "has_logo": brand_file("logo") is not None, "has_icon": brand_file("icon") is not None,
             "version": __version__, "tz": tz,
         })
+
+    # ------------------------------------------------------------ branding (files you supply in /config)
+    brand_dir = settings.runners_file.parent
+
+    def brand_file(stem: str):
+        for ext in ("svg", "png", "webp", "jpg", "jpeg", "ico"):
+            p = brand_dir / f"{stem}.{ext}"
+            if p.is_file():
+                return p
+        return None
+
+    app.state.brand_file = brand_file
+
+    @app.get("/brand/logo")
+    def brand_logo():
+        p = brand_file("logo")
+        if not p:
+            raise HTTPException(404, "No logo file in the config folder")
+        return FileResponse(p, headers={"Cache-Control": "max-age=3600"})
+
+    @app.get("/brand/icon")
+    @app.get("/favicon.ico")
+    @app.get("/apple-touch-icon.png")
+    def brand_icon():
+        p = brand_file("icon")
+        if p:
+            return FileResponse(p, headers={"Cache-Control": "max-age=3600"})
+        return FileResponse(HERE / "static" / "icon.svg", media_type="image/svg+xml")
+
+    @app.get("/manifest.webmanifest")
+    def manifest():
+        p = brand_file("icon")
+        mime = {"svg": "image/svg+xml", "png": "image/png", "webp": "image/webp", "jpg": "image/jpeg",
+                "jpeg": "image/jpeg", "ico": "image/x-icon"}[p.suffix[1:]] if p else "image/svg+xml"
+        return JSONResponse({
+            "name": "Our parkruns", "short_name": "parkruns", "start_url": "/", "display": "standalone",
+            "background_color": "#eef1ec", "theme_color": "#17231d",
+            "icons": [{"src": "/brand/icon", "sizes": "any", "type": mime, "purpose": "any"}],
+        }, media_type="application/manifest+json")
+
+    @app.get("/metrics")
+    def metrics_endpoint():
+        nxt = None
+        if app.state.scheduler:
+            times = [j.next_run_time for j in app.state.scheduler.get_jobs() if j.next_run_time]
+            nxt = min(times) if times else None
+        body = render_metrics(db, runners, syncer.running, nxt)
+        return Response(body, media_type="text/plain; version=0.0.4; charset=utf-8")
 
     @app.get("/healthz")
     def healthz():

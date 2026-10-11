@@ -59,6 +59,42 @@ The database lives in `/opt/appdata/parkrun/data`, so updates and restarts keep 
 
 Port 5062 on your LAN. For access away from home, use Tailscale to reach the server's Tailscale address on the same port, and set `BASE_URL` to whichever address you want email links to use. The app has no login, so don't expose it to the internet.
 
+## Your own logo and icon
+
+Put image files next to `runners.yaml` (the `/config` folder) and restart the container:
+
+- `logo.png` (or `.svg`/`.webp`): shown in the header as "Our" followed by the logo. Without it the header reads "Our parkruns".
+- `icon.png` (or `.svg`/`.ico`): used as the browser tab icon and for home-screen shortcuts. Without it a built-in icon is used.
+
+The repo doesn't include any third-party logos; supply your own files.
+
+## Grafana monitoring (optional)
+
+The app publishes Prometheus-format metrics at `/metrics` (`up`, last successful check, failed checks in a row, results per runner, next scheduled check). To have VictoriaMetrics scrape it and Grafana alert on it:
+
+1. **Join the monitoring network.** Add to `docker-compose.yml` (use your VictoriaMetrics network's name, from `docker inspect victoriametrics -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}'`):
+   ```yaml
+   services:
+     parkrun:
+       networks: [default, monitoring]
+   networks:
+     monitoring:
+       external: true
+       name: grafana_grafana_default   # your network's name
+   ```
+2. **Scrape it.** Add to VictoriaMetrics' `scrape.yaml` under `scrape_configs:`, then reload (`curl http://localhost:8428/-/reload`):
+   ```yaml
+     - job_name: parkrun
+       scrape_interval: 60s
+       static_configs:
+         - targets: ["parkrun:8000"]
+   ```
+3. **Create the alerts and dashboard.** With Grafana on the same network:
+   ```bash
+   docker exec -e GRAFANA_PASSWORD='<admin password>' parkrun python -m app.grafana_setup
+   ```
+   This creates three alert rules in a "Parkrun" group beside your existing alerts, using your existing contact points: **Parkrun Dashboard Down** (not scrapeable for 5 minutes), **Parkrun Checks Failing** (3+ failed checks in a row) and **Parkrun Results Not Updating** (no successful check for 8 days). It also creates a "Parkrun dashboard" in Grafana. It's safe to run again; it updates in place. Use `--url` if Grafana isn't reachable as `http://grafana:3000`.
+
 ## Configuration
 
 **Runners** go in `runners.yaml` (see [config/runners.example.yaml](config/runners.example.yaml)). Restart the container after editing. Removing someone hides them; their results stay in the database.

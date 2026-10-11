@@ -291,6 +291,7 @@ def chart_series(results: list[Result], people: list[PersonSummary]) -> dict:
         for aid, (name, colour) in colours.items():
             pts = [{
                 "date": r.run_date.isoformat(), "seconds": r.time_seconds, "time": r.time, "pace": r.pace,
+                "pace_seconds": round(r.pace_seconds, 1),
                 "event": r.event_name, "age_grade": r.age_grade, "pb": r.is_pb or r.is_first,
             } for r in results if r.athlete_id == aid and r.distance == dist]
             if pts:

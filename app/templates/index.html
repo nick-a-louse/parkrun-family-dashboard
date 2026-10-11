@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Our parkruns</title>
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="{{ url_for('static', path='icon.svg') }}" type="image/svg+xml">
+<link rel="icon" href="/brand/icon">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#17231d">
 <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}?v={{ version }}">
 <script>
   // Apply a saved theme before first paint (no flash).
@@ -16,7 +19,7 @@
 {% set has_results = feed|length > 0 %}
 <header class="masthead">
   <div class="wrap masthead-row">
-    <h1 class="brand">Our parkruns</h1>
+    <h1 class="brand">{% if has_logo %}<span>Our</span> <img class="brand-logo" src="/brand/logo" alt="parkruns">{% else %}Our parkruns{% endif %}</h1>
     <div class="masthead-actions">
       <p class="updated" id="updated">
         {% if status.last_success %}Updated <time datetime="{{ status.last_success }}">{{ status.last_success_text }}</time>{% else %}Not updated yet{% endif %}
@@ -124,6 +127,10 @@
           <button type="button" role="radio" data-dist="5k">5k</button>
           <button type="button" role="radio" data-dist="2k">2k junior</button>
         </div>
+        <div class="seg" role="radiogroup" aria-label="Measure">
+          <button type="button" role="radio" data-measure="time" aria-checked="true">Time</button>
+          <button type="button" role="radio" data-measure="pace">Pace</button>
+        </div>
         <div class="seg" role="radiogroup" aria-label="View">
           <button type="button" role="radio" data-view="chart" aria-checked="true">Chart</button>
           <button type="button" role="radio" data-view="table">Table</button>
@@ -134,7 +141,7 @@
       <div class="legend" id="legend"></div>
       <div class="chart" id="chart" aria-describedby="chart-note"></div>
       <div class="chart-table" id="chart-table" hidden></div>
-      <p class="chart-note" id="chart-note">Faster times are higher up. Hover or tap for details.</p>
+      <p class="chart-note" id="chart-note">Faster is higher up. Hover or tap for details.</p>
       <div class="chart-dl">
         <button type="button" class="btn btn-small" id="dl-png">Download PNG</button>
         <button type="button" class="btn btn-small" id="dl-svg">Download SVG</button>

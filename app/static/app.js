@@ -95,7 +95,11 @@
   /* ------------------------------------------------------------------ chart */
   var data = JSON.parse($("#chart-data").textContent);
   var chartEl = $("#chart"), tableEl = $("#chart-table"), legendEl = $("#legend");
-  var state = { dist: null, view: "chart" };
+  var state = { dist: null, view: "chart", measure: "time" };
+  try { var m = localStorage.getItem("chartMeasure"); if (m === "pace" || m === "time") state.measure = m; } catch (e) {}
+  function value(p) { return state.measure === "pace" ? p.pace_seconds : p.seconds; }
+  function shown(p) { return state.measure === "pace" ? p.pace : p.time; }
+  function other(p) { return state.measure === "pace" ? p.time : p.pace; }
 
   function latestDate(series) {
     var d = "";
@@ -109,12 +113,20 @@
     if (!(data[b.dataset.dist] || []).length) b.disabled = true;
     b.addEventListener("click", function () { state.dist = b.dataset.dist; syncControls(); drawChart(); });
   });
+  $$("[data-measure]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.measure = b.dataset.measure;
+      try { localStorage.setItem("chartMeasure", state.measure); } catch (e) {}
+      syncControls(); drawChart();
+    });
+  });
   $$("[data-view]").forEach(function (b) {
     b.addEventListener("click", function () { state.view = b.dataset.view; syncControls(); drawChart(); });
   });
   function syncControls() {
     $$("[data-dist]").forEach(function (b) { b.setAttribute("aria-checked", String(b.dataset.dist === state.dist)); });
     $$("[data-view]").forEach(function (b) { b.setAttribute("aria-checked", String(b.dataset.view === state.view)); });
+    $$("[data-measure]").forEach(function (b) { b.setAttribute("aria-checked", String(b.dataset.measure === state.measure)); });
   }
   syncControls();
 
@@ -149,12 +161,12 @@
     var titleH = opts.title ? 52 : 0;
     var narrow = width < 520;
     var H = (narrow ? 250 : 320) + titleH;
-    var M = { l: 46, r: narrow ? 70 : 92, t: 12 + titleH, b: 28 };
+    var M = { l: state.measure === "pace" ? 66 : 46, r: narrow ? 70 : 92, t: 12 + titleH, b: 28 };
     var iw = width - M.l - M.r, ih = H - M.t - M.b;
 
     var pts = [];
     series.forEach(function (s, si) {
-      s.points.forEach(function (p) { pts.push({ s: si, t: Date.parse(p.date + "T00:00:00Z"), v: p.seconds, p: p }); });
+      s.points.forEach(function (p) { pts.push({ s: si, t: Date.parse(p.date + "T00:00:00Z"), v: value(p), p: p }); });
     });
     var tMin = Math.min.apply(null, pts.map(function (d) { return d.t; }));
     var tMax = Math.max.apply(null, pts.map(function (d) { return d.t; }));
@@ -175,7 +187,7 @@
     out.push('<g class="grid axis">');
     for (var v = vMin; v <= vMax + 0.1; v += step) {
       out.push('<line x1="' + M.l + '" x2="' + (M.l + iw) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="' + C.line + '" stroke-width="1"/>');
-      out.push('<text x="' + (M.l - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end" font-size="12" fill="' + C.muted + '">' + fmt(v) + "</text>");
+      out.push('<text x="' + (M.l - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end" font-size="12" fill="' + C.muted + '">' + fmt(v) + (state.measure === "pace" ? "/km" : "") + "</text>");
     }
     // x ticks: up to ~6 evenly spaced dates
     var span = tMax - tMin, n = narrow ? 3 : 5, withYear = new Date(tMin).getUTCFullYear() !== new Date(tMax).getUTCFullYear();
@@ -288,9 +300,9 @@
         var s = current.series[d.s];
         var row = document.createElement("div"); row.className = "row";
         var key = document.createElement("i"); key.style.background = colourOf(s);
-        var val = document.createElement("b"); val.textContent = d.p.time;
+        var val = document.createElement("b"); val.textContent = shown(d.p);
         var name = document.createElement("span"); name.textContent = s.name;
-        var ag = document.createElement("small"); ag.textContent = d.p.pace + (d.p.age_grade ? ", " + d.p.age_grade.toFixed(1) + "%" : "");
+        var ag = document.createElement("small"); ag.textContent = other(d.p) + (d.p.age_grade ? ", " + d.p.age_grade.toFixed(1) + "%" : "");
         row.appendChild(key); row.appendChild(val); row.appendChild(name); row.appendChild(ag);
         tip.appendChild(row);
       });
@@ -313,7 +325,7 @@
   /* ------------------------------------------------------------------ chart downloads */
   function exportSvg() {
     var series = data[state.dist] || [];
-    var built = buildSvg(series, 900, { title: "Finish times, " + distLabel(), background: true, distLabel: distLabel() });
+    var built = buildSvg(series, 900, { title: (state.measure === "pace" ? "Average pace per km, " : "Finish times, ") + distLabel(), background: true, distLabel: distLabel() });
     // add a legend row under the title for the exported file
     var legend = series.map(function (s, i) {
       return '<g transform="translate(' + (46 + i * 140) + ',42)"><line x1="0" x2="16" y1="0" y2="0" stroke="' + colourOf(s) + '" stroke-width="2"/><text x="22" y="4" font-size="13" fill="' + css("--ink") + '">' + esc(s.name) + "</text></g>";
@@ -330,7 +342,7 @@
   }
   var stamp = new Date().toISOString().slice(0, 10);
   $("#dl-svg").addEventListener("click", function () {
-    download(new Blob([exportSvg()], { type: "image/svg+xml" }), "parkrun-" + state.dist + "-" + stamp + ".svg");
+    download(new Blob([exportSvg()], { type: "image/svg+xml" }), "parkrun-" + state.dist + "-" + state.measure + "-" + stamp + ".svg");
   });
   $("#dl-png").addEventListener("click", function () {
     var svg = exportSvg();
@@ -343,7 +355,7 @@
       var ctx = c.getContext("2d");
       ctx.scale(k, k);
       ctx.drawImage(img, 0, 0, w, h);
-      c.toBlob(function (b) { download(b, "parkrun-" + state.dist + "-" + stamp + ".png"); }, "image/png");
+      c.toBlob(function (b) { download(b, "parkrun-" + state.dist + "-" + state.measure + "-" + stamp + ".png"); }, "image/png");
     };
     img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
   });
