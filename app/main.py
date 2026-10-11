@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import threading
 import time
 from datetime import date, datetime, timedelta
@@ -13,7 +14,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import __version__
+from . import __version__, branding
 from .config import load_runners, load_settings
 from .db import Database
 from .exports import filtered, to_csv, to_json, to_xlsx
@@ -119,7 +120,7 @@ def create_app(settings=None, fetcher_factory=None) -> FastAPI:
         log_rows = db.query("SELECT * FROM fetch_log ORDER BY id DESC LIMIT 12")
         return templates.TemplateResponse(request, "index.html", {
             **view, "fetch_log": log_rows, "settings": settings, "distance_label": DISTANCE_LABEL,
-            "has_logo": brand_file("logo") is not None, "has_icon": brand_file("icon") is not None,
+            "logo": logo_info(), "icon_version": int(brand_file("icon").stat().st_mtime) if brand_file("icon") else 0,
             "version": __version__, "tz": tz,
         })
 
@@ -135,12 +136,31 @@ def create_app(settings=None, fetcher_factory=None) -> FastAPI:
 
     app.state.brand_file = brand_file
 
+    logo_scale = float(os.environ.get("LOGO_SCALE", "1") or 1)
+
+    def logo_info():
+        p = brand_file("logo")
+        if not p:
+            return None
+        try:
+            return branding.get(p, logo_scale)
+        except Exception:
+            log.exception("Couldn't process the logo file %s", p)
+            return None
+
     @app.get("/brand/logo")
     def brand_logo():
         p = brand_file("logo")
         if not p:
             raise HTTPException(404, "No logo file in the config folder")
         return FileResponse(p, headers={"Cache-Control": "max-age=3600"})
+
+    @app.get("/brand/logo-mask.png")
+    def brand_logo_mask():
+        info = logo_info()
+        if not info:
+            raise HTTPException(404, "No usable logo file in the config folder")
+        return Response(info.png, media_type="image/png", headers={"Cache-Control": "max-age=3600"})
 
     @app.get("/brand/icon")
     @app.get("/favicon.ico")

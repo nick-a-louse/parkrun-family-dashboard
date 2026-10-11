@@ -106,10 +106,20 @@ h1, h2, h3, h4, p, dl, dd, ol, ul { margin: 0; }
 /* ---------------------------------------------------------------- masthead */
 .masthead { padding: 20px 0 8px; }
 .masthead-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.brand { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: baseline; gap: 0.28em; }
-/* Sized so the logo's lettering sits at the same height as "Our": a logo image includes some
-   padding above and below its text, so it's set a little taller than the font's cap height. */
-.brand-logo { height: 1.15em; width: auto; align-self: center; position: relative; top: 0.04em; }
+.brand { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
+/* The logo is a cut-out painted in the text colour, so it follows light/dark mode.
+   Its lowercase letters are sized to 1ex (the x-height of "Our") and sit on the text
+   baseline; the server measures the logo to work out the ex sizes. */
+.brand-logo {
+  display: inline-block;
+  width: var(--logo-w); height: var(--logo-h);
+  vertical-align: calc(-1 * var(--logo-drop));
+  margin-left: 0.1em;
+  background-color: currentColor;
+  -webkit-mask: url("/brand/logo-mask.png") no-repeat center / contain;
+          mask: url("/brand/logo-mask.png") no-repeat center / contain;
+}
+@media (forced-colors: active) { .brand-logo { background-color: CanvasText; } }
 .masthead-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .updated { color: var(--muted); font-size: 14px; margin-right: 4px; }
 .notice { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); font-size: 14px; }

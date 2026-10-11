@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Our parkruns</title>
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="/brand/icon">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/brand/icon?v={{ icon_version }}">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v={{ icon_version }}">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#17231d">
 <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}?v={{ version }}">
@@ -19,7 +19,7 @@
 {% set has_results = feed|length > 0 %}
 <header class="masthead">
   <div class="wrap masthead-row">
-    <h1 class="brand">{% if has_logo %}<span>Our</span> <img class="brand-logo" src="/brand/logo" alt="parkruns">{% else %}Our parkruns{% endif %}</h1>
+    <h1 class="brand">{% if logo %}Our <span class="brand-logo" role="img" aria-label="parkruns" style="--logo-w: {{ logo.css.width }}ex; --logo-h: {{ logo.css.height }}ex; --logo-drop: {{ logo.css.drop }}ex;"></span>{% else %}Our parkruns{% endif %}</h1>
     <div class="masthead-actions">
       <p class="updated" id="updated">
         {% if status.last_success %}Updated <time datetime="{{ status.last_success }}">{{ status.last_success_text }}</time>{% else %}Not updated yet{% endif %}

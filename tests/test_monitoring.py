@@ -24,17 +24,49 @@ def test_metrics_endpoint(env, fixtures):
     assert 'parkrun_info{version="' in body
 
 
+def _wordmark(path):
+    """A stand-in logo: dark lowercase-style bars on a white square, with a blob above (like a tree)."""
+    from PIL import Image, ImageDraw
+    im = Image.new("RGB", (600, 600), "white")
+    d = ImageDraw.Draw(im)
+    d.rectangle([40, 320, 560, 400], fill=(44, 36, 62))      # x-height band: rows 320-400
+    d.ellipse([240, 170, 330, 320], fill=(44, 36, 62))       # tree above the letters
+    d.rectangle([40, 400, 60, 430], fill=(44, 36, 62))       # descender below
+    im.save(path)
+
+
+def test_logo_processing(tmp_path):
+    from app import branding
+    from PIL import Image
+    import io
+    _wordmark(tmp_path / "logo.png")
+    logo = branding.build(tmp_path / "logo.png")
+    assert (logo.width, logo.height) == (521, 261)            # trimmed to the ink (40-560, 170-430)
+    assert abs(logo.xheight_top - 150) <= 2 and abs(logo.baseline - 230) <= 2
+    css = logo.css
+    assert abs(css["height"] - 261 / 80) < 0.1                # whole logo is ~3.3 x-heights tall
+    assert abs(css["drop"] - 31 / 80) < 0.1                   # descender hangs below the baseline
+    im = Image.open(io.BytesIO(logo.png))
+    assert im.mode == "RGBA"
+    assert im.getpixel((5, 5))[3] == 0                        # white background is now transparent
+    assert im.getpixel((100, 190))[3] == 255                  # letters are solid
+    bigger = branding.build(tmp_path / "logo.png", scale=1.25)
+    assert bigger.css["height"] > css["height"]
+
+
 def test_branding_files(env, fixtures):
     c = TestClient(create_app(fetcher_factory=lambda: FakeFetcher({})))
     assert c.get("/brand/logo").status_code == 404
     page = c.get("/").text
     assert "Our parkruns</h1>" in page
     assert c.get("/favicon.ico").headers["content-type"].startswith("image/svg")   # built-in fallback
-    (env / "logo.png").write_bytes(b"\x89PNG\r\n\x1a\nfake")
+    _wordmark(env / "logo.png")
     (env / "icon.png").write_bytes(b"\x89PNG\r\n\x1a\nicon")
     page = c.get("/").text
-    assert '<img class="brand-logo" src="/brand/logo"' in page
-    assert c.get("/brand/logo").content.endswith(b"fake")
+    assert 'class="brand-logo" role="img" aria-label="parkruns"' in page and "--logo-h:" in page
+    assert "/brand/icon?v=" in page
+    mask = c.get("/brand/logo-mask.png")
+    assert mask.status_code == 200 and mask.headers["content-type"] == "image/png"
     assert c.get("/apple-touch-icon.png").content.endswith(b"icon")
     m = c.get("/manifest.webmanifest").json()
     assert m["icons"][0]["type"] == "image/png"
