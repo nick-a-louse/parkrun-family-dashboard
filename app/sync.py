@@ -110,6 +110,8 @@ class Syncer:
             (now_iso(), int(out.ok), out.new_results, out.requests, out.message, log_id))
         if out.ok:
             self.db.set_state("last_success", now_iso())
+        log.log(logging.INFO if out.ok else logging.WARNING, "Check (%s) finished: %s, %d request(s)",
+                trigger, out.message, out.requests)
         self._after_sync(out)
         self.running = False
         self._lock.release()

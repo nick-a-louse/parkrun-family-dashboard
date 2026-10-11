@@ -33,6 +33,7 @@ PALETTE_DARK = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300"
 
 def create_app(settings=None, fetcher_factory=None) -> FastAPI:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    logging.getLogger("apscheduler").setLevel(logging.WARNING)
     settings = settings or load_settings()
     runners = load_runners(settings.runners_file)
     db = Database(settings.db_path)
