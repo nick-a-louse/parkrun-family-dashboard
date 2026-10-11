@@ -1,22 +1,17 @@
 FROM python:3.12-slim-bookworm
 
-# Set INSTALL_BROWSER=true to include headless Chromium (FETCHER=browser).
-ARG INSTALL_BROWSER=false
+# Standard image. The :browser variant (headless Chromium) is built from Dockerfile.browser.
 ARG VERSION=dev
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     TZ=Europe/London \
     DB_PATH=/data/parkrun.db \
-    RUNNERS_FILE=/config/runners.yaml \
-    PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
+    RUNNERS_FILE=/config/runners.yaml
 
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt \
- && if [ "$INSTALL_BROWSER" = "true" ]; then \
-      pip install --no-cache-dir playwright==1.48.2 && playwright install --with-deps chromium; \
-    fi
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 RUN useradd --system --uid 1000 --home /app parkrun \

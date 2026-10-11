@@ -3,7 +3,7 @@
 The fetcher is swappable via the FETCHER setting:
 
 * ``http``    (default) plain HTTPS requests with normal browser headers
-* ``browser`` a headless Chromium via Playwright (image built with INSTALL_BROWSER=true)
+* ``browser`` a headless Chromium via Playwright (the :browser image)
 * ``manual``  no network at all: pages are imported by uploading saved HTML
 
 Every fetcher waits a random few seconds between requests so a sync looks like
@@ -116,7 +116,7 @@ class BrowserFetcher(Fetcher):
         try:
             from playwright.sync_api import sync_playwright
         except ImportError as e:  # pragma: no cover - depends on image
-            raise FetchError("FETCHER=browser needs the image built with INSTALL_BROWSER=true") from e
+            raise FetchError("FETCHER=browser needs the :browser image") from e
         self._pw = sync_playwright().start()
         self._browser = self._pw.chromium.launch(headless=True)
         self._page = self._browser.new_page(user_agent=USER_AGENT, locale="en-GB")

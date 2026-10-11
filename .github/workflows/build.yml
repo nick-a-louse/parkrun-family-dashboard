@@ -36,10 +36,10 @@ jobs:
       matrix:
         include:
           - variant: standard
-            browser: "false"
+            dockerfile: Dockerfile
             suffix: ""
           - variant: browser
-            browser: "true"
+            dockerfile: Dockerfile.browser
             suffix: "-browser"
     steps:
       - uses: actions/checkout@v4
@@ -62,10 +62,10 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
+          file: ${{ matrix.dockerfile }}
           push: true
           platforms: linux/amd64
           build-args: |
-            INSTALL_BROWSER=${{ matrix.browser }}
             VERSION=${{ github.ref_name }}-${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

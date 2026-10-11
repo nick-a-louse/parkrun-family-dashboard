@@ -73,7 +73,7 @@ Port 5060 on your LAN. For access away from home, use Tailscale to reach the ser
 | `EMAIL_FROM`, `EMAIL_TO` | | Sender, and comma-separated recipients |
 | `POLL_DAYS`, `POLL_TIMES` | `saturday,sunday` / `11:00,12:30,14:00,17:00,21:00` | Automatic checks (local time) |
 | `CATCHUP` | `monday 08:30` | Weekly re-check for corrected results |
-| `FETCHER` | `http` | `http`, `browser` (use the `:browser` image) or `manual` |
+| `FETCHER` | `http` | `http`, `browser` (use the `:browser` image, which sets it for you) or `manual` |
 | `REQUEST_DELAY` | `3-6` | Random pause between requests, seconds |
 | `REFRESH_COOLDOWN` | `300` | Seconds between manual checks |
 | `FAILURE_ALERT_THRESHOLD` | `3` | Failed checks in a row before a warning email |
