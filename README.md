@@ -34,7 +34,7 @@ You need Docker and a login to GitHub's container registry (the image is private
    ```bash
    sudo mkdir -p /opt/appdata/parkrun/{data,config}
    sudo chown 1000:1000 /opt/appdata/parkrun/data
-   mkdir -p ~/parkrun && cd ~/parkrun
+   sudo mkdir -p /srv/parkrun && cd /srv/parkrun   # docker-compose.yml and .env live here
    # copy docker-compose.yml, .env.example and config/runners.example.yaml from this repo, then:
    cp .env.example .env            # fill in BASE_URL and the SMTP settings
    sudo cp config/runners.example.yaml /opt/appdata/parkrun/config/runners.yaml   # add your runners
@@ -51,7 +51,7 @@ Or in Portainer: *Stacks → Add stack*, paste `docker-compose.yml`, and add the
 ### Updating
 
 ```bash
-cd ~/parkrun && docker compose pull && docker compose up -d
+cd /srv/parkrun && docker compose pull && docker compose up -d
 ```
 The database lives in `/opt/appdata/parkrun/data`, so updates and restarts keep all data.
 
