@@ -11,6 +11,14 @@ from .parser import format_time
 
 DISTANCES = ["5k", "2k"]
 DISTANCE_LABEL = {"5k": "5k parkrun", "2k": "2k junior parkrun"}
+DISTANCE_KM = {"5k": 5.0, "2k": 2.0}
+
+
+def format_pace(seconds_per_km: float | None) -> str:
+    """e.g. 380.4 -> '6:20 /km'"""
+    if seconds_per_km is None:
+        return ""
+    return f"{format_time(round(seconds_per_km))} /km"
 
 # parkrun milestone clubs. Junior parkrun bands are named after the distance covered.
 MILESTONES = {
@@ -68,6 +76,15 @@ class Result:
         return format_time(self.time_seconds)
 
     @property
+    def pace_seconds(self) -> float:
+        """Average time per kilometre for this run."""
+        return self.time_seconds / DISTANCE_KM[self.distance]
+
+    @property
+    def pace(self) -> str:
+        return format_pace(self.pace_seconds)
+
+    @property
     def url(self) -> str:
         return f"https://www.parkrun.org.uk/{self.event_slug}/results/{self.run_number}/"
 
@@ -81,6 +98,8 @@ class Result:
             "run_number": self.run_number,
             "distance": self.distance,
             "time": self.time,
+            "pace": format_time(round(self.pace_seconds)),
+            "pace_seconds_per_km": round(self.pace_seconds, 1),
             "time_seconds": self.time_seconds,
             "position": self.position,
             "finishers": self.finishers,
@@ -102,6 +121,11 @@ class Best:
     time_seconds: int
     run_date: date
     event_name: str
+    distance: str = "5k"
+
+    @property
+    def pace(self):
+        return format_pace(self.time_seconds / DISTANCE_KM[self.distance])
 
     @property
     def time(self):
@@ -117,6 +141,7 @@ class DistanceSummary:
     event_pbs: list[tuple[str, Best, int]]          # event name, best, runs there
     milestones_reached: list[str]
     next_milestone: tuple[str, int] | None          # (name, runs to go)
+    avg_pace: float | None                          # mean seconds per km over all runs
     latest_age_grade: float | None
     best_age_grade: float | None
     best_position: int | None
@@ -234,7 +259,7 @@ def summarise(db: Database, runners: list[Runner], results: list[Result], palett
             event_pbs = []
             for name, rs in sorted(by_event.items(), key=lambda kv: -len(kv[1])):
                 b = min(rs, key=lambda r: (r.time_seconds, r.run_date))
-                event_pbs.append((name, Best(b.time_seconds, b.run_date, b.event_name), len(rs)))
+                event_pbs.append((name, Best(b.time_seconds, b.run_date, b.event_name, dist), len(rs)))
             ms = milestone_list(dist, runner.athlete_id in juniors)
             reached = [milestone_name(dist, m, label) for m, label in ms if n >= m]
             nxt = next(((milestone_name(dist, m, label), m - n) for m, label in ms if n < m), None)
@@ -244,9 +269,10 @@ def summarise(db: Database, runners: list[Runner], results: list[Result], palett
             latest = max(runs, key=lambda r: r.run_date, default=None)
             p.distances.append(DistanceSummary(
                 distance=dist, runs=n,
-                pb=Best(pb.time_seconds, pb.run_date, pb.event_name) if pb else None,
-                year_best=Best(yb.time_seconds, yb.run_date, yb.event_name) if yb else None,
+                pb=Best(pb.time_seconds, pb.run_date, pb.event_name, dist) if pb else None,
+                year_best=Best(yb.time_seconds, yb.run_date, yb.event_name, dist) if yb else None,
                 event_pbs=event_pbs, milestones_reached=reached, next_milestone=nxt,
+                avg_pace=(sum(r.pace_seconds for r in runs) / len(runs)) if runs else None,
                 latest_age_grade=latest.age_grade if latest else None,
                 best_age_grade=max(ags) if ags else None,
                 best_position=min(positions) if positions else None,
@@ -264,7 +290,7 @@ def chart_series(results: list[Result], people: list[PersonSummary]) -> dict:
         series = []
         for aid, (name, colour) in colours.items():
             pts = [{
-                "date": r.run_date.isoformat(), "seconds": r.time_seconds, "time": r.time,
+                "date": r.run_date.isoformat(), "seconds": r.time_seconds, "time": r.time, "pace": r.pace,
                 "event": r.event_name, "age_grade": r.age_grade, "pb": r.is_pb or r.is_first,
             } for r in results if r.athlete_id == aid and r.distance == dist]
             if pts:

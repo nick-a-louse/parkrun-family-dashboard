@@ -52,6 +52,7 @@
           </div>
           <dl class="token-stats">
             <div class="stat-time"><dt>Time</dt><dd>{{ r.time }}</dd></div>
+            <div><dt>Pace</dt><dd>{{ r.pace }}</dd></div>
             <div><dt>Overall</dt><dd>{{ r.position or '–' }}{% if r.finishers %}<span class="of"> of {{ r.finishers }}</span>{% endif %}</dd></div>
             <div><dt>{{ r.gender or 'Gender' }}</dt><dd>{{ r.gender_position or '–' }}{% if r.gender_count %}<span class="of"> of {{ r.gender_count }}</span>{% endif %}</dd></div>
             <div><dt>Age grade</dt><dd>{{ '%.1f%%' % r.age_grade if r.age_grade else '–' }}</dd></div>
@@ -85,8 +86,9 @@
         <div class="dist">
           <h4 class="dist-title">{{ distance_label[d.distance] }} <span class="quiet">{{ d.runs }} run{{ 's' if d.runs != 1 }}</span></h4>
           <dl class="pb-grid">
-            <div class="pb-main"><dt>Personal best</dt><dd>{{ d.pb.time if d.pb else '–' }}</dd>{% if d.pb %}<dd class="sub">{{ d.pb.event_name }}, {{ d.pb.run_date|short_date }}</dd>{% endif %}</div>
+            <div class="pb-main"><dt>Personal best</dt><dd>{{ d.pb.time if d.pb else '–' }}</dd>{% if d.pb %}<dd class="sub">{{ d.pb.pace }} · {{ d.pb.event_name }}, {{ d.pb.run_date|short_date }}</dd>{% endif %}</div>
             <div><dt>Best this year</dt><dd>{{ d.year_best.time if d.year_best else '–' }}</dd></div>
+            <div><dt>Average pace</dt><dd>{{ d.avg_pace|pace if d.avg_pace else '–' }}</dd><dd class="sub">over {{ d.runs }} run{{ 's' if d.runs != 1 }}</dd></div>
             <div><dt>Age grade</dt><dd>{{ '%.1f%%' % d.latest_age_grade if d.latest_age_grade else '–' }}</dd>{% if d.best_age_grade and d.best_age_grade != d.latest_age_grade %}<dd class="sub">best {{ '%.1f%%' % d.best_age_grade }}</dd>{% endif %}</div>
             <div><dt>Best position</dt><dd>{{ d.best_position|ordinal if d.best_position else '–' }}</dd>{% if d.best_gender_position %}<dd class="sub">{{ d.best_gender_position|ordinal }} by gender</dd>{% endif %}</div>
           </dl>
@@ -147,7 +149,7 @@
     </div>
     {% if has_results %}
         <table class="feed-table">
-      <thead><tr><th>Date</th><th>Runner</th><th>Event</th><th class="num">Time</th><th class="num">Overall</th><th class="num">Gender</th><th class="num">Age grade</th></tr></thead>
+      <thead><tr><th>Date</th><th>Runner</th><th>Event</th><th class="num">Time</th><th class="num">Pace</th><th class="num">Overall</th><th class="num">Gender</th><th class="num">Age grade</th></tr></thead>
       <tbody>
       {% for r in feed %}
         <tr class="{{ 'older' if r.run_date < cutoff }}" style="--c-l: {{ (people|selectattr('athlete_id','equalto',r.athlete_id)|first).colour }}; --c-d: {{ dark_colours[r.athlete_id] }};">
@@ -157,6 +159,7 @@
             {% if r.milestone %}<span class="badge badge-milestone">{{ r.milestone }}</span>{% endif %}</td>
           <td class="c-event" data-label="Event"><a href="{{ r.url }}" rel="noopener" target="_blank">{{ r.event_name }}</a> <span class="quiet">#{{ r.run_number }} · {{ r.distance }}</span></td>
           <td class="num c-time" data-label="Time">{{ r.time }}</td>
+          <td class="num c-pace" data-label="Pace">{{ r.pace }}</td>
           <td class="num" data-label="Overall">{{ r.position or '–' }}{% if r.finishers %}<span class="of">/{{ r.finishers }}</span>{% endif %}</td>
           <td class="num" data-label="{{ r.gender or 'Gender' }}">{{ r.gender_position or '–' }}{% if r.gender_count %}<span class="of">/{{ r.gender_count }}</span>{% endif %}</td>
           <td class="num" data-label="Age grade">{{ '%.2f%%' % r.age_grade if r.age_grade else '–' }}</td>

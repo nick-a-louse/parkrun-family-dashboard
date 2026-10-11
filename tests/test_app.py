@@ -38,6 +38,7 @@ def test_dashboard_empty_then_full(env, fixtures):
     assert "New PB" in r.text
     assert "Half marathon (11)" in r.text
     assert "25" in r.text and "of 46" in r.text      # gender position
+    assert "6:22 /km" in r.text and "Average pace" in r.text
     assert c.get("/healthz").json()["ok"]
 
 
@@ -65,6 +66,8 @@ def test_exports(env, fixtures):
     assert len(lines) == 9
     j = c.get("/export/results.json?runner=Ava").json()
     assert len(j["results"]) == 3 and j["results"][0]["gender_position"] == 25
+    assert j["results"][0]["pace"] == "6:22" and j["results"][0]["pace_seconds_per_km"] == 382.5
+    assert "Pace (min/km)" in lines[0]
     x = c.get("/export/results.xlsx?distance=2k")
     wb = load_workbook(io.BytesIO(x.content))
     assert wb.active.max_row == 1 + 7
@@ -79,6 +82,7 @@ def test_api_for_home_assistant(env, fixtures):
     summary = c.get("/api/summary").json()["runners"]
     assert summary["Ava"]["distances"]["2k"]["runs_to_next_milestone"] == 8
     assert summary["Max"]["distances"]["5k"]["pb"] == "29:58"
+    assert summary["Max"]["distances"]["5k"]["pb_pace"] == "6:00 /km"   # 29:58 / 5 km
 
 
 def test_import_endpoint(env, fixtures):

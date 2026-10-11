@@ -234,6 +234,7 @@ main > section:first-child { border-top: 0; padding-top: 16px; }
 .feed-table th { text-align: left; font-size: 13px; font-weight: 600; color: var(--muted); padding: 6px 10px; border-bottom: 1px solid var(--line-strong); }
 .feed-table th.num { text-align: right; }
 .feed-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: baseline; }
+.feed-table td.c-pace { color: var(--muted); white-space: nowrap; }
 .feed-table td.c-time { font-family: var(--font-num); font-size: 19px; font-weight: 700; }
 .feed-table .c-date { white-space: nowrap; color: var(--muted); }
 .feed-table .c-who { font-weight: 600; white-space: nowrap; }
@@ -268,7 +269,7 @@ main > section:first-child { border-top: 0; padding-top: 16px; }
 
   .token-row { grid-template-columns: auto 1fr; gap: 10px 12px; padding: 12px; }
   .token { min-width: 70px; height: 50px; font-size: 28px; padding-left: 16px; }
-  .token-stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, auto); gap: 8px; justify-content: space-between; }
+  .token-stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, auto); gap: 8px 12px; justify-content: space-between; }
   .token-stats .stat-time dd { font-size: 26px; }
 
   .feed-table thead { display: none; }

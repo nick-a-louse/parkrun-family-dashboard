@@ -226,11 +226,11 @@
     series.forEach(function (s) { s.points.forEach(function (p) { rows.push({ n: s.name, p: p }); }); });
     rows.sort(function (a, b) { return a.p.date < b.p.date ? 1 : a.p.date > b.p.date ? -1 : a.n.localeCompare(b.n); });
     var t = document.createElement("table");
-    t.innerHTML = '<thead><tr><th>Date</th><th>Runner</th><th>Event</th><th class="num">Time</th><th class="num">Age grade</th></tr></thead>';
+    t.innerHTML = '<thead><tr><th>Date</th><th>Runner</th><th>Event</th><th class="num">Time</th><th class="num">Pace</th><th class="num">Age grade</th></tr></thead>';
     var tb = document.createElement("tbody");
     rows.forEach(function (r) {
       var tr = document.createElement("tr");
-      [r.p.date, r.n, r.p.event, r.p.time, r.p.age_grade ? r.p.age_grade.toFixed(2) + "%" : "–"].forEach(function (v, i) {
+      [r.p.date, r.n, r.p.event, r.p.time, r.p.pace, r.p.age_grade ? r.p.age_grade.toFixed(2) + "%" : "–"].forEach(function (v, i) {
         var td = document.createElement("td");
         td.textContent = v;
         if (i >= 3) td.className = "num";
@@ -290,7 +290,7 @@
         var key = document.createElement("i"); key.style.background = colourOf(s);
         var val = document.createElement("b"); val.textContent = d.p.time;
         var name = document.createElement("span"); name.textContent = s.name;
-        var ag = document.createElement("small"); ag.textContent = d.p.age_grade ? d.p.age_grade.toFixed(1) + "%" : "";
+        var ag = document.createElement("small"); ag.textContent = d.p.pace + (d.p.age_grade ? ", " + d.p.age_grade.toFixed(1) + "%" : "");
         row.appendChild(key); row.appendChild(val); row.appendChild(name); row.appendChild(ag);
         tip.appendChild(row);
       });

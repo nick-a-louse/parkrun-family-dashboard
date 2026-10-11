@@ -131,6 +131,9 @@ def test_stats(env, fixtures):
     d2 = ava_p.distances[0]
     assert d2.distance == "2k" and d2.runs == 3
     assert d2.pb.time == "12:45"
+    assert d2.pb.pace == "6:22 /km"                  # 765 s / 2 km = 382.5 s, rounds to 6:22
+    assert ava[2].pace == "6:22 /km"
+    assert round(d2.avg_pace) == round((798 + 824 + 765) / 3 / 2)
     assert d2.next_milestone == ("Half marathon (11)", 8)
     assert ava_p.current_streak == 3
     sam = next(p for p in people if p.name == "Sam")
@@ -170,6 +173,7 @@ def test_email_content(env, fixtures, monkeypatch):
     text = msg.get_body(("plain",)).get_content()
     html = msg.get_body(("html",)).get_content()
     assert "Ava" in text and "12:45" in text and "25 of 46" in text
+    assert "6:22 /km" in text and "6:22 /km" in html
     assert "http://gomez.test:5062" in text and 'href="http://gomez.test:5062"' in html
 
 

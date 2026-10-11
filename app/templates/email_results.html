@@ -12,7 +12,7 @@
     <div style="font-size:13px;color:#59636e;margin:2px 0 8px;"><a href="{{ r.url }}" style="color:#59636e;">{{ r.event_name }} #{{ r.run_number }}</a> &middot; {{ r.distance }} &middot; {{ r.run_date.strftime('%a %-d %b') }}</div>
     <table role="presentation" style="border-collapse:collapse;font-size:14px;">
       <tr>
-        <td style="padding:0 20px 0 0;"><div style="font-size:12px;color:#59636e;">Time</div><div style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;">{{ r.time }}</div></td>
+        <td style="padding:0 20px 0 0;"><div style="font-size:12px;color:#59636e;">Time</div><div style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;">{{ r.time }}</div><div style="font-size:12px;color:#59636e;">{{ r.pace }}</div></td>
         <td style="padding:0 20px 0 0;"><div style="font-size:12px;color:#59636e;">Position</div><div style="font-weight:600;">{{ r.position or '–' }}{% if r.finishers %} <span style="color:#59636e;font-weight:400;">of {{ r.finishers }}</span>{% endif %}</div></td>
         <td style="padding:0 20px 0 0;"><div style="font-size:12px;color:#59636e;">{{ r.gender or 'Gender' }}</div><div style="font-weight:600;">{{ r.gender_position or '–' }}{% if r.gender_count %} <span style="color:#59636e;font-weight:400;">of {{ r.gender_count }}</span>{% endif %}</div></td>
         <td><div style="font-size:12px;color:#59636e;">Age grade</div><div style="font-weight:600;">{{ '%.2f%%' % r.age_grade if r.age_grade else '–' }}</div></td>

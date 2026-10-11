@@ -20,7 +20,7 @@ from .exports import filtered, to_csv, to_json, to_xlsx
 from .notify import Notifier
 from .parser import format_time
 from .scheduler import describe, start_scheduler
-from .stats import DISTANCE_LABEL, chart_series, load_results, summarise, weekend_of
+from .stats import DISTANCE_LABEL, format_pace, chart_series, load_results, summarise, weekend_of
 from .sync import Syncer
 
 log = logging.getLogger("parkrun")
@@ -48,6 +48,7 @@ def create_app(settings=None, fetcher_factory=None) -> FastAPI:
     templates.env.filters["nice_date"] = lambda d: d.strftime("%a %-d %b %Y") if d else ""
     templates.env.filters["short_date"] = lambda d: d.strftime("%-d %b") if d else ""
     templates.env.filters["ordinal"] = _ordinal
+    templates.env.filters["pace"] = format_pace
     templates.env.filters["local_time"] = lambda iso: _friendly(iso, tz)
 
     app.state.settings = settings
@@ -192,6 +193,8 @@ def create_app(settings=None, fetcher_factory=None) -> FastAPI:
                     "pb": d.pb.time if d.pb else None,
                     "pb_seconds": d.pb.time_seconds if d.pb else None,
                     "pb_date": d.pb.run_date.isoformat() if d.pb else None,
+                    "pb_pace": d.pb.pace if d.pb else None,
+                    "average_pace": format_pace(d.avg_pace) if d.avg_pace else None,
                     "best_this_year": d.year_best.time if d.year_best else None,
                     "latest_age_grade": d.latest_age_grade,
                     "best_age_grade": d.best_age_grade,

@@ -9,7 +9,7 @@ from .stats import Result
 
 COLUMNS = [
     ("runner", "Runner"), ("parkrun_id", "parkrun ID"), ("date", "Date"), ("event", "Event"),
-    ("run_number", "Run number"), ("distance", "Distance"), ("time", "Time"),
+    ("run_number", "Run number"), ("distance", "Distance"), ("time", "Time"), ("pace", "Pace (min/km)"),
     ("time_seconds", "Time (seconds)"), ("position", "Position"), ("finishers", "Finishers"),
     ("gender", "Gender"), ("gender_position", "Gender position"), ("gender_count", "Gender finishers"),
     ("age_group", "Age group"), ("age_grade", "Age grade %"), ("new_pb", "New PB"),
