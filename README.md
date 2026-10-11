@@ -44,7 +44,7 @@ You need Docker and a login to GitHub's container registry (the image is private
    docker compose up -d
    docker compose logs -f parkrun
    ```
-   Open `http://<server>:5060`. On first start it loads every runner's history straight away (this takes about a minute because of the pauses between requests).
+   Open `http://<server>:5062`. On first start it loads every runner's history straight away (this takes about a minute because of the pauses between requests).
 
 Or in Portainer: *Stacks → Add stack*, paste `docker-compose.yml`, and add the `.env` values under *Environment variables*.
 
@@ -57,7 +57,7 @@ The database lives in `/opt/appdata/parkrun/data`, so updates and restarts keep 
 
 ### Access
 
-Port 5060 on your LAN. For access away from home, use Tailscale to reach the server's Tailscale address on the same port, and set `BASE_URL` to whichever address you want email links to use. The app has no login, so don't expose it to the internet.
+Port 5062 on your LAN. For access away from home, use Tailscale to reach the server's Tailscale address on the same port, and set `BASE_URL` to whichever address you want email links to use. The app has no login, so don't expose it to the internet.
 
 ## Configuration
 

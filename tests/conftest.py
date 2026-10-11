@@ -72,5 +72,5 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setenv("RUNNERS_FILE", str(runners))
     monkeypatch.setenv("SCHEDULER_ENABLED", "false")
     monkeypatch.setenv("REQUEST_DELAY", "0")
-    monkeypatch.setenv("BASE_URL", "http://gomez.test:5060")
+    monkeypatch.setenv("BASE_URL", "http://gomez.test:5062")
     return tmp_path

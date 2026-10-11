@@ -170,7 +170,7 @@ def test_email_content(env, fixtures, monkeypatch):
     text = msg.get_body(("plain",)).get_content()
     html = msg.get_body(("html",)).get_content()
     assert "Ava" in text and "12:45" in text and "25 of 46" in text
-    assert "http://gomez.test:5060" in text and 'href="http://gomez.test:5060"' in html
+    assert "http://gomez.test:5062" in text and 'href="http://gomez.test:5062"' in html
 
 
 def test_scheduler_jobs(env, fixtures):
