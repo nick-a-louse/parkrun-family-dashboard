@@ -313,7 +313,7 @@
   /* ------------------------------------------------------------------ chart downloads */
   function exportSvg() {
     var series = data[state.dist] || [];
-    var built = buildSvg(series, 900, { title: "parkrun times, " + distLabel(), background: true, distLabel: distLabel() });
+    var built = buildSvg(series, 900, { title: "Finish times, " + distLabel(), background: true, distLabel: distLabel() });
     // add a legend row under the title for the exported file
     var legend = series.map(function (s, i) {
       return '<g transform="translate(' + (46 + i * 140) + ',42)"><line x1="0" x2="16" y1="0" y2="0" stroke="' + colourOf(s) + '" stroke-width="2"/><text x="22" y="4" font-size="13" fill="' + css("--ink") + '">' + esc(s.name) + "</text></g>";

@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12-slim-bookworm
 
 # Set INSTALL_BROWSER=true to include headless Chromium (FETCHER=browser).
 ARG INSTALL_BROWSER=false
