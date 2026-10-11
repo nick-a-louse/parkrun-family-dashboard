@@ -1,0 +1,9 @@
+New parkrun results
+{% for r in results %}
+{{ r.runner }} - {{ r.event_name }} #{{ r.run_number }} ({{ r.distance }}), {{ r.run_date.strftime('%a %d %b %Y') }}
+  Time: {{ r.time }}{% if r.is_pb %}  ** NEW PB **{% elif r.is_first %}  (first {{ r.distance }}){% endif %}
+  Position: {{ r.position or '-' }}{% if r.finishers %} of {{ r.finishers }}{% endif %}{% if r.gender_position %}, {{ r.gender_position }} of {{ r.gender_count }} {{ (r.gender or '').lower() }}{% endif %}
+  Age grade: {{ '%.2f%%' % r.age_grade if r.age_grade else '-' }}{% if r.milestone %}
+  Milestone: {{ r.milestone }}!{% endif %}
+{% endfor %}
+Dashboard: {{ base_url }}

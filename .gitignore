@@ -1,0 +1,18 @@
+# Real config and secrets stay on the server, never in git
+config/runners.yaml
+.env
+*.env
+!.env.example
+
+# Database
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/

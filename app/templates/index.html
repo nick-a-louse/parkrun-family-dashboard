@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Our parkruns</title>
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="{{ url_for('static', path='icon.svg') }}" type="image/svg+xml">
+<link rel="stylesheet" href="{{ url_for('static', path='app.css') }}?v={{ version }}">
+<script>
+  // Apply a saved theme before first paint (no flash).
+  try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+</head>
+<body>
+{% set has_results = feed|length > 0 %}
+<header class="masthead">
+  <div class="wrap masthead-row">
+    <h1 class="brand">Our parkruns</h1>
+    <div class="masthead-actions">
+      <p class="updated" id="updated">
+        {% if status.last_success %}Updated <time datetime="{{ status.last_success }}">{{ status.last_success_text }}</time>{% else %}Not updated yet{% endif %}
+      </p>
+      <button class="btn btn-primary" id="refresh" type="button">Check for results</button>
+      <button class="btn btn-icon" id="theme" type="button" aria-label="Switch light or dark theme" title="Switch light or dark theme">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="wrap"><p class="notice" id="notice" role="status" aria-live="polite"{% if not (status.last_attempt and not status.last_attempt.ok and status.last_attempt.finished_at) %} hidden{% endif %}>
+    {% if status.last_attempt and not status.last_attempt.ok and status.last_attempt.finished_at %}The last check didn't work: {{ status.last_attempt.message }}{% endif %}
+  </p></div>
+</header>
+
+<main class="wrap">
+
+  {# ---------------------------------------------------------------- latest weekend #}
+  <section class="latest" aria-labelledby="latest-h">
+    {% if has_results %}
+      {% set lw = latest_weekend %}
+      <h2 id="latest-h" class="section-title">Latest weekend <span class="quiet">{{ lw|short_date }}{% if (lw - today).days|abs > 1 %} {{ lw.year }}{% endif %}</span></h2>
+      <ol class="tokens">
+        {% for r in feed if r.run_date >= lw %}
+        <li class="token-row" style="--c-l: {{ (people|selectattr('athlete_id','equalto',r.athlete_id)|first).colour }}; --c-d: {{ dark_colours[r.athlete_id] }};">
+          <div class="token" aria-label="Finished {{ r.position|ordinal }}"><span class="token-p">P</span>{{ r.position or '–' }}</div>
+          <div class="token-body">
+            <p class="token-name"><span class="swatch" aria-hidden="true"></span>{{ r.runner }}
+              {% if r.is_pb %}<span class="badge badge-pb">New PB</span>{% elif r.is_first %}<span class="badge badge-first">First {{ r.distance }}</span>{% endif %}
+              {% if r.milestone %}<span class="badge badge-milestone">{{ r.milestone }}</span>{% endif %}
+            </p>
+            <p class="token-event"><a href="{{ r.url }}" rel="noopener" target="_blank">{{ r.event_name }} #{{ r.run_number }}</a>, {{ r.run_date.strftime('%A') }}</p>
+          </div>
+          <dl class="token-stats">
+            <div class="stat-time"><dt>Time</dt><dd>{{ r.time }}</dd></div>
+            <div><dt>Overall</dt><dd>{{ r.position or '–' }}{% if r.finishers %}<span class="of"> of {{ r.finishers }}</span>{% endif %}</dd></div>
+            <div><dt>{{ r.gender or 'Gender' }}</dt><dd>{{ r.gender_position or '–' }}{% if r.gender_count %}<span class="of"> of {{ r.gender_count }}</span>{% endif %}</dd></div>
+            <div><dt>Age grade</dt><dd>{{ '%.1f%%' % r.age_grade if r.age_grade else '–' }}</dd></div>
+          </dl>
+        </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <h2 id="latest-h" class="section-title">No results yet</h2>
+      <p class="empty">Results appear here a couple of hours after each parkrun. If this is a fresh install, the first check runs straight away; you can also use <strong>Check for results</strong>.</p>
+    {% endif %}
+  </section>
+
+  {# ---------------------------------------------------------------- people #}
+  <section class="people" aria-labelledby="people-h">
+    <h2 id="people-h" class="section-title">Runners</h2>
+    <div class="people-grid">
+      {% for p in people %}
+      <article class="person" style="--c-l: {{ p.colour }}; --c-d: {{ dark_colours[p.athlete_id] }};">
+        <header class="person-head">
+          <h3><span class="swatch" aria-hidden="true"></span>{{ p.name }}</h3>
+          <p class="person-meta">
+            {% if p.current_streak > 1 %}{{ p.current_streak }} weekends in a row{% elif p.last_run %}Last ran {{ p.last_run|short_date }}{% endif %}
+            {% if p.longest_streak > 1 and p.longest_streak > p.current_streak %}<span class="quiet"> (best streak {{ p.longest_streak }})</span>{% endif %}
+          </p>
+        </header>
+        {% if not p.distances %}
+          <p class="empty">No results yet. They'll show here after {{ p.name }}'s first parkrun.</p>
+        {% endif %}
+        {% for d in p.distances %}
+        <div class="dist">
+          <h4 class="dist-title">{{ distance_label[d.distance] }} <span class="quiet">{{ d.runs }} run{{ 's' if d.runs != 1 }}</span></h4>
+          <dl class="pb-grid">
+            <div class="pb-main"><dt>Personal best</dt><dd>{{ d.pb.time if d.pb else '–' }}</dd>{% if d.pb %}<dd class="sub">{{ d.pb.event_name }}, {{ d.pb.run_date|short_date }}</dd>{% endif %}</div>
+            <div><dt>Best this year</dt><dd>{{ d.year_best.time if d.year_best else '–' }}</dd></div>
+            <div><dt>Age grade</dt><dd>{{ '%.1f%%' % d.latest_age_grade if d.latest_age_grade else '–' }}</dd>{% if d.best_age_grade and d.best_age_grade != d.latest_age_grade %}<dd class="sub">best {{ '%.1f%%' % d.best_age_grade }}</dd>{% endif %}</div>
+            <div><dt>Best position</dt><dd>{{ d.best_position|ordinal if d.best_position else '–' }}</dd>{% if d.best_gender_position %}<dd class="sub">{{ d.best_gender_position|ordinal }} by gender</dd>{% endif %}</div>
+          </dl>
+          {% if d.next_milestone %}
+            {% set name, togo = d.next_milestone %}
+            {% set target = d.runs + togo %}
+            <div class="milestone">
+              <p><strong>{{ togo }} more</strong> to {{ name }}{% if d.milestones_reached %} <span class="quiet">· has {{ d.milestones_reached|join(', ') }}</span>{% endif %}</p>
+              <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="{{ target }}" aria-valuenow="{{ d.runs }}" aria-label="{{ d.runs }} of {{ target }} runs"><span style="width: {{ (100 * d.runs / target)|round(1) }}%"></span></div>
+            </div>
+          {% elif d.milestones_reached %}
+            <p class="milestone">Every milestone reached: {{ d.milestones_reached|join(', ') }}</p>
+          {% endif %}
+          {% if d.event_pbs|length > 1 %}
+          <details class="event-pbs">
+            <summary>Best at each event</summary>
+            <ul>{% for name, best, n in d.event_pbs %}<li><span>{{ name }}</span><span class="num">{{ best.time }}</span><span class="quiet">{{ n }} run{{ 's' if n != 1 }}</span></li>{% endfor %}</ul>
+          </details>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ---------------------------------------------------------------- trends #}
+  <section class="trends" aria-labelledby="trends-h">
+    <div class="section-head">
+      <h2 id="trends-h" class="section-title">Times over time</h2>
+      <div class="controls">
+        <div class="seg" role="radiogroup" aria-label="Distance">
+          <button type="button" role="radio" data-dist="5k">5k</button>
+          <button type="button" role="radio" data-dist="2k">2k junior</button>
+        </div>
+        <div class="seg" role="radiogroup" aria-label="View">
+          <button type="button" role="radio" data-view="chart" aria-checked="true">Chart</button>
+          <button type="button" role="radio" data-view="table">Table</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-wrap" id="chart-wrap">
+      <div class="legend" id="legend"></div>
+      <div class="chart" id="chart" aria-describedby="chart-note"></div>
+      <div class="chart-table" id="chart-table" hidden></div>
+      <p class="chart-note" id="chart-note">Faster times are higher up. Hover or tap for details.</p>
+      <div class="chart-dl">
+        <button type="button" class="btn btn-small" id="dl-png">Download PNG</button>
+        <button type="button" class="btn btn-small" id="dl-svg">Download SVG</button>
+      </div>
+    </div>
+  </section>
+
+  {# ---------------------------------------------------------------- feed #}
+  <section class="feed" aria-labelledby="feed-h">
+    <div class="section-head">
+      <h2 id="feed-h" class="section-title">All results <span class="quiet">{{ feed|length }}</span></h2>
+    </div>
+    {% if has_results %}
+        <table class="feed-table">
+      <thead><tr><th>Date</th><th>Runner</th><th>Event</th><th class="num">Time</th><th class="num">Overall</th><th class="num">Gender</th><th class="num">Age grade</th></tr></thead>
+      <tbody>
+      {% for r in feed %}
+        <tr class="{{ 'older' if r.run_date < cutoff }}" style="--c-l: {{ (people|selectattr('athlete_id','equalto',r.athlete_id)|first).colour }}; --c-d: {{ dark_colours[r.athlete_id] }};">
+          <td class="c-date" data-label="Date"><time datetime="{{ r.run_date.isoformat() }}">{{ r.run_date.strftime('%a %-d %b') }}</time>{% if r.run_date.year != today.year %} {{ r.run_date.year }}{% endif %}</td>
+          <td class="c-who" data-label="Runner"><span class="swatch" aria-hidden="true"></span>{{ r.runner }}
+            {% if r.is_pb %}<span class="badge badge-pb">PB</span>{% elif r.is_first %}<span class="badge badge-first">First {{ r.distance }}</span>{% endif %}
+            {% if r.milestone %}<span class="badge badge-milestone">{{ r.milestone }}</span>{% endif %}</td>
+          <td class="c-event" data-label="Event"><a href="{{ r.url }}" rel="noopener" target="_blank">{{ r.event_name }}</a> <span class="quiet">#{{ r.run_number }} · {{ r.distance }}</span></td>
+          <td class="num c-time" data-label="Time">{{ r.time }}</td>
+          <td class="num" data-label="Overall">{{ r.position or '–' }}{% if r.finishers %}<span class="of">/{{ r.finishers }}</span>{% endif %}</td>
+          <td class="num" data-label="{{ r.gender or 'Gender' }}">{{ r.gender_position or '–' }}{% if r.gender_count %}<span class="of">/{{ r.gender_count }}</span>{% endif %}</td>
+          <td class="num" data-label="Age grade">{{ '%.2f%%' % r.age_grade if r.age_grade else '–' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% if feed|selectattr('run_date', 'lt', cutoff)|list|length %}
+    <button type="button" class="btn" id="show-older">Show all {{ feed|length }} results</button>
+    {% endif %}
+    {% else %}
+    <p class="empty">Nothing yet.</p>
+    {% endif %}
+  </section>
+
+  {# ---------------------------------------------------------------- tools #}
+  <section class="tools" aria-labelledby="tools-h">
+    <h2 id="tools-h" class="section-title">Data and settings</h2>
+    <div class="tools-grid">
+      <div>
+        <h3>Download results</h3>
+        <p class="links"><a href="/export/results.xlsx" download>Excel</a> <a href="/export/results.csv" download>CSV</a> <a href="/export/results.json" download>JSON</a></p>
+        <p class="quiet small">Every result for every runner. For a printout, use your browser's Print; controls are hidden on paper.</p>
+      </div>
+      <div>
+        <h3>Automatic checks</h3>
+        <p class="small">{{ settings.poll_days|map('capitalize')|join(' and ') }} at {{ settings.poll_times|join(', ') }}, stopping once everyone's result is in. Catch-up on {{ settings.catchup_day|capitalize }} at {{ settings.catchup_time }}.</p>
+        {% if status.schedule %}<p class="quiet small">Next check: {{ status.schedule[0].next_text }}</p>{% endif %}
+        <p class="quiet small">Fetch method: {{ settings.fetcher }}. Email: {{ 'on, to ' ~ settings.email_to|join(', ') if settings.email_enabled else 'not set up' }}.</p>
+        {% if settings.email_enabled %}<button type="button" class="btn btn-small" id="test-email">Send a test email</button>{% endif %}
+      </div>
+      <div>
+        <h3>Import a saved page</h3>
+        <p class="small">If parkrun blocks automatic checks, save a runner's results page (or an event's results page) from your browser and upload it here.</p>
+        <form id="import-form" class="import">
+          <input type="file" name="file" id="import-file" accept=".html,.htm,text/html" required>
+          <button class="btn btn-small" type="submit">Import</button>
+        </form>
+      </div>
+    </div>
+    <details class="log">
+      <summary>Recent checks</summary>
+      <table>
+        <thead><tr><th>Started</th><th>Trigger</th><th>Result</th><th class="num">Requests</th></tr></thead>
+        <tbody>
+        {% for l in fetch_log %}
+          <tr><td>{{ l.started_at|local_time }}</td><td>{{ l.trigger }}</td><td class="{{ 'bad' if l.ok == 0 }}">{% if l.ok is none %}running…{% else %}{{ l.message }}{% endif %}</td><td class="num">{{ l.requests }}</td></tr>
+        {% else %}
+          <tr><td colspan="4">No checks yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </details>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <p class="quiet small">Results from <a href="https://www.parkrun.org.uk/" rel="noopener" target="_blank">parkrun</a>, read from each runner's public results page. Not affiliated with parkrun. v{{ version }}</p>
+</footer>
+
+<script id="chart-data" type="application/json">{{ series|tojson }}</script>
+<script src="{{ url_for('static', path='app.js') }}?v={{ version }}" defer></script>
+</body>
+</html>

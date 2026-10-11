@@ -1,0 +1,19 @@
+# Copy to /opt/appdata/parkrun/config/runners.yaml (or wherever your compose file mounts /config)
+# and replace with your runners. Restart the container after editing.
+#
+#   name:    what the dashboard calls them
+#   id:      parkrun ID, with or without the leading A
+#   expect:  optional - days they usually run. Scheduled checks stop for the day once
+#            everyone expected has a result. If left out, it's worked out from their history.
+#   colour:  optional - line/marker colour as a hex value. Otherwise a colour-blind-safe
+#            palette is used in the order runners are listed here.
+runners:
+  - name: Parent
+    id: A1234567
+    expect: [saturday]
+  - name: Child one
+    id: A2345678
+    expect: [sunday]
+  - name: Child two
+    id: A3456789
+    expect: [sunday]

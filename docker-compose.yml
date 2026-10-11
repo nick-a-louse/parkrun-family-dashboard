@@ -1,0 +1,12 @@
+services:
+  parkrun:
+    image: ghcr.io/nick-a-louse/parkrun-family-dashboard:latest
+    # Use :browser instead if parkrun blocks plain requests (and set FETCHER=browser)
+    container_name: parkrun
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "5060:8000"
+    volumes:
+      - /opt/appdata/parkrun/data:/data
+      - /opt/appdata/parkrun/config:/config:ro

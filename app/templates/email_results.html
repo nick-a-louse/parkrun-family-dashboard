@@ -1,0 +1,25 @@
+<!doctype html>
+<html><body style="margin:0;padding:24px;background:#f4f4f1;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2328;">
+<div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:24px;">
+  <h1 style="margin:0 0 4px;font-size:20px;">New parkrun results</h1>
+  <p style="margin:0 0 20px;color:#59636e;font-size:14px;">{{ results|length }} new result{{ 's' if results|length != 1 }}</p>
+  {% for r in results %}
+  <div style="border-top:1px solid #e3e3de;padding:14px 0;">
+    <div style="font-size:16px;font-weight:600;">{{ r.runner }}
+      {% if r.is_pb %}<span style="background:#ffe8b3;color:#7a4a00;border-radius:4px;padding:1px 6px;font-size:12px;font-weight:600;margin-left:6px;">New PB</span>{% elif r.is_first %}<span style="background:#e2ecf8;color:#1d4a7a;border-radius:4px;padding:1px 6px;font-size:12px;font-weight:600;margin-left:6px;">First {{ r.distance }}</span>{% endif %}
+      {% if r.milestone %}<span style="background:#dcefe2;color:#185c33;border-radius:4px;padding:1px 6px;font-size:12px;font-weight:600;margin-left:6px;">{{ r.milestone }}</span>{% endif %}
+    </div>
+    <div style="font-size:13px;color:#59636e;margin:2px 0 8px;"><a href="{{ r.url }}" style="color:#59636e;">{{ r.event_name }} #{{ r.run_number }}</a> &middot; {{ r.distance }} &middot; {{ r.run_date.strftime('%a %-d %b') }}</div>
+    <table role="presentation" style="border-collapse:collapse;font-size:14px;">
+      <tr>
+        <td style="padding:0 20px 0 0;"><div style="font-size:12px;color:#59636e;">Time</div><div style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;">{{ r.time }}</div></td>
+        <td style="padding:0 20px 0 0;"><div style="font-size:12px;color:#59636e;">Position</div><div style="font-weight:600;">{{ r.position or '–' }}{% if r.finishers %} <span style="color:#59636e;font-weight:400;">of {{ r.finishers }}</span>{% endif %}</div></td>
+        <td style="padding:0 20px 0 0;"><div style="font-size:12px;color:#59636e;">{{ r.gender or 'Gender' }}</div><div style="font-weight:600;">{{ r.gender_position or '–' }}{% if r.gender_count %} <span style="color:#59636e;font-weight:400;">of {{ r.gender_count }}</span>{% endif %}</div></td>
+        <td><div style="font-size:12px;color:#59636e;">Age grade</div><div style="font-weight:600;">{{ '%.2f%%' % r.age_grade if r.age_grade else '–' }}</div></td>
+      </tr>
+    </table>
+  </div>
+  {% endfor %}
+  <p style="margin:20px 0 0;"><a href="{{ base_url }}" style="display:inline-block;background:#1f2328;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;font-size:14px;">Open the dashboard</a></p>
+</div>
+</body></html>

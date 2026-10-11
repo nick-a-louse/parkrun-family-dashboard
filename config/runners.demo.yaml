@@ -1,0 +1,9 @@
+# Made-up runners for scripts/demo_data.py
+runners:
+  - name: Sam
+    id: A1000003
+    expect: [saturday]
+  - name: Ava
+    id: A1000001
+  - name: Max
+    id: A1000002
