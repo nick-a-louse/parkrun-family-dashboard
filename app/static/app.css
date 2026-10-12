@@ -1,146 +1,58 @@
-/* parkrun family dashboard
-   One typeface family (Barlow, with Barlow Condensed for big numbers).
-   The finish token is the one bold element; everything else stays quiet. */
-
-@font-face { font-family: "Barlow"; font-weight: 400; font-display: swap; src: url("fonts/barlow-latin-400-normal.woff2") format("woff2"); }
-@font-face { font-family: "Barlow"; font-weight: 500; font-display: swap; src: url("fonts/barlow-latin-500-normal.woff2") format("woff2"); }
-@font-face { font-family: "Barlow"; font-weight: 600; font-display: swap; src: url("fonts/barlow-latin-600-normal.woff2") format("woff2"); }
-@font-face { font-family: "Barlow"; font-weight: 700; font-display: swap; src: url("fonts/barlow-latin-700-normal.woff2") format("woff2"); }
-@font-face { font-family: "Barlow Condensed"; font-weight: 600; font-display: swap; src: url("fonts/barlow-condensed-latin-600-normal.woff2") format("woff2"); }
-@font-face { font-family: "Barlow Condensed"; font-weight: 700; font-display: swap; src: url("fonts/barlow-condensed-latin-700-normal.woff2") format("woff2"); }
+/* parkrun family dashboard: app-specific styles on top of gomez-ui.css (TECH-P8).
+   gomez-ui provides fonts, neutrals, header, buttons, segments, width and footer.
+   This file sets the accent and the parkrun-only pieces: finish tokens, badges, runner colours. */
 
 :root {
-  color-scheme: light;
-  --bg: #eef1ec;          /* pale park grey-green */
-  --surface: #fbfcfa;
-  --ink: #17231d;         /* deep green-black */
-  --muted: #56635b;
-  --faint: #7d8a82;
-  --line: #d9dfd6;
-  --line-strong: #b9c3b7;
-  --token-bg: #17231d;
-  --token-ink: #eef1ec;
-  --pb-bg: #ffd24a;       /* hi-vis yellow, used only for new PBs */
-  --pb-ink: #3a2c00;
-  --first-bg: #dde8f5;
-  --first-ink: #1d3f66;
-  --ms-bg: #d7ecdc;
-  --ms-ink: #1b5432;
-  --bad: #b3261e;
-  --focus: #2a78d6;
-  --c: var(--c-l, #2a78d6);
-  --font: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-num: "Barlow Condensed", "Barlow", system-ui, sans-serif;
-  --radius: 10px;
+  --accent-l: #1d6b45; --accent-d: #6cc596;      /* registered accent: park green */
+  --token-bg: #18191a; --token-ink: #f5f5f2;      /* finish token */
+  --pb-bg: #ffd24a; --pb-ink: #3a2c00;            /* hi-vis yellow, only for new PBs */
+  --first-bg: #dde8f5; --first-ink: #1d3f66;
+  --ms-bg: #d7ecdc; --ms-ink: #1b5432;
+  --c: var(--c-l, #2a78d6);                       /* runner colour, set per row */
 }
-
 @media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) {
-    color-scheme: dark;
-    --bg: #111613;
-    --surface: #18201b;
-    --ink: #e7ece7;
-    --muted: #a5b1a9;
-    --faint: #85918a;
-    --line: #2a342e;
-    --line-strong: #3d4a42;
-    --token-bg: #e7ece7;
-    --token-ink: #111613;
-    --pb-bg: #e9bb2b;
-    --pb-ink: #241a00;
-    --first-bg: #233449;
-    --first-ink: #c8dcf3;
-    --ms-bg: #1f3a28;
-    --ms-ink: #bfe5ca;
-    --bad: #ff8a80;
-    --focus: #6aa8f0;
+  :root:not([data-theme="light"]) {
+    --token-bg: #ececea; --token-ink: #111212;
+    --pb-bg: #e9bb2b; --pb-ink: #241a00;
+    --first-bg: #233449; --first-ink: #c8dcf3;
+    --ms-bg: #1f3a28; --ms-ink: #bfe5ca;
   }
-  :root:where(:not([data-theme="light"])) [style*="--c-d"] { --c: var(--c-d); }
+  :root:not([data-theme="light"]) [style*="--c-d"] { --c: var(--c-d); }
 }
 :root[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #111613;
-  --surface: #18201b;
-  --ink: #e7ece7;
-  --muted: #a5b1a9;
-  --faint: #85918a;
-  --line: #2a342e;
-  --line-strong: #3d4a42;
-  --token-bg: #e7ece7;
-  --token-ink: #111613;
-  --pb-bg: #e9bb2b;
-  --pb-ink: #241a00;
-  --first-bg: #233449;
-  --first-ink: #c8dcf3;
-  --ms-bg: #1f3a28;
-  --ms-ink: #bfe5ca;
-  --bad: #ff8a80;
-  --focus: #6aa8f0;
+  --token-bg: #ececea; --token-ink: #111212;
+  --pb-bg: #e9bb2b; --pb-ink: #241a00;
+  --first-bg: #233449; --first-ink: #c8dcf3;
+  --ms-bg: #1f3a28; --ms-ink: #bfe5ca;
 }
-:root[data-theme="dark"] [style*="--c-d"] { --c: var(--c-d); }
 [style*="--c-l"] { --c: var(--c-l); }
 :root[data-theme="dark"] [style*="--c-l"] { --c: var(--c-d); }
 
-* { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--font);
-  font-size: 16px;
-  line-height: 1.45;
-  font-variant-numeric: tabular-nums;
-}
-a { color: inherit; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
-a:hover { text-decoration-color: currentColor; }
-:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
-h1, h2, h3, h4, p, dl, dd, ol, ul { margin: 0; }
-.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
-.quiet { color: var(--muted); font-weight: 400; }
-.small { font-size: 14px; }
-.num { text-align: right; }
+h3, h4, dl, dd, ol, ul { margin: 0; }
+.num { text-align: right; font-family: inherit; font-weight: inherit; }  /* here .num means a right-aligned number cell;
+   big figures set font-family: var(--font-num) themselves */
 .empty { color: var(--muted); max-width: 60ch; }
-[hidden] { display: none !important; }
 
-/* ---------------------------------------------------------------- masthead */
-.masthead { padding: 20px 0 8px; }
-.masthead-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.brand { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
-/* The logo is a cut-out painted in the text colour, so it follows light/dark mode.
-   Its lowercase letters are sized to 1ex (the x-height of "Our") and sit on the text
-   baseline; the server measures the logo to work out the ex sizes. */
+/* ---------------------------------------------------------------- header extras */
+/* The "parkruns" wordmark sits inside the title, next to the square logo.
+   It is a cut-out painted in the text colour, so it follows light/dark mode.
+   Its lowercase letters are sized to 1ex and sit on the text baseline; the server
+   measures the logo to work out the ex sizes. */
 .brand-logo {
   display: inline-block;
   width: var(--logo-w); height: var(--logo-h);
-  vertical-align: calc(-1 * var(--logo-drop));
+  /* +1px: the wordmark's letter shapes make it read slightly low against "Our" (review feedback) */
+  vertical-align: calc(1px - var(--logo-drop));
   margin-left: 0.1em;
   background-color: currentColor;
   -webkit-mask: url("/brand/logo-mask.png") no-repeat center / contain;
           mask: url("/brand/logo-mask.png") no-repeat center / contain;
 }
 @media (forced-colors: active) { .brand-logo { background-color: CanvasText; } }
-.masthead-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.updated { color: var(--muted); font-size: 14px; margin-right: 4px; }
-.notice { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); font-size: 14px; }
-.notice.bad { border-color: var(--bad); color: var(--bad); }
-
-.btn {
-  font: inherit; font-size: 15px; font-weight: 600;
-  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
-  padding: 8px 14px; border-radius: 8px; cursor: pointer; min-height: 40px;
-}
-.btn:hover { border-color: var(--ink); }
-.btn[disabled] { opacity: .6; cursor: progress; }
-.btn-primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.btn-primary:hover { opacity: .9; }
-.btn-icon { width: 40px; padding: 0; display: inline-grid; place-items: center; }
-.btn-small { font-size: 14px; padding: 6px 10px; min-height: 34px; }
+.g-header .notice { margin-bottom: 12px; }
+.notice { margin-top: 0; }
 
 /* ---------------------------------------------------------------- sections */
-main > section { padding: 28px 0; border-top: 1px solid var(--line); }
-main > section:first-child { border-top: 0; padding-top: 16px; }
-.section-title { font-size: 20px; font-weight: 700; margin-bottom: 14px; }
 .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .section-head .section-title { margin-bottom: 0; }
 
@@ -176,8 +88,15 @@ main > section:first-child { border-top: 0; padding-top: 16px; }
 .token-p { font-size: 15px; position: absolute; top: 5px; left: 7px; opacity: .7; }
 .token-name { font-size: 18px; font-weight: 700; display: flex; align-items: center; flex-wrap: wrap; row-gap: 4px; }
 .token-event { color: var(--muted); font-size: 14px; margin-top: 2px; }
-.token-stats { display: flex; gap: 22px; align-items: flex-end; }
-.token-stats dt { font-size: 12px; color: var(--muted); }
+/* Stats: five equal columns, the same width in every row, so Time / Pace / Overall /
+   gender / Age grade line up down the list. Labels share one line and values share
+   one baseline, even though Time is set larger. */
+.token-stats {
+  display: grid; grid-template-columns: repeat(5, 6.25rem); grid-template-rows: auto auto;
+  grid-auto-flow: column; column-gap: 16px; row-gap: 2px; align-items: baseline;
+}
+.token-stats > div { display: contents; }
+.token-stats dt { font-size: 12px; color: var(--muted); align-self: end; }
 .token-stats dd { font-weight: 600; white-space: nowrap; }
 .token-stats .stat-time dd { font-family: var(--font-num); font-size: 30px; line-height: 1; font-weight: 700; }
 .of { color: var(--muted); font-weight: 400; }
@@ -208,10 +127,6 @@ main > section:first-child { border-top: 0; padding-top: 16px; }
 
 /* ---------------------------------------------------------------- controls */
 .controls { display: flex; gap: 8px; flex-wrap: wrap; }
-.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; background: var(--surface); }
-.seg button { font: inherit; font-size: 14px; font-weight: 600; border: 0; background: transparent; color: var(--muted); padding: 7px 12px; cursor: pointer; min-height: 36px; }
-.seg button + button { border-left: 1px solid var(--line-strong); }
-.seg button[aria-checked="true"] { background: var(--ink); color: var(--bg); }
 .seg button[disabled] { opacity: .4; cursor: not-allowed; }
 
 /* ---------------------------------------------------------------- chart */
@@ -270,19 +185,18 @@ main > section:first-child { border-top: 0; padding-top: 16px; }
 .log th { color: var(--muted); font-weight: 600; }
 .log td.bad { color: var(--bad); }
 .log .num { text-align: right; }
-.foot { padding: 20px 16px 40px; }
 
 /* ---------------------------------------------------------------- phones */
+/* Narrower screens: stats move under the runner's name, in a 3-column grid. */
+@media (max-width: 960px) {
+  .token-row { grid-template-columns: auto 1fr; gap: 10px 12px; }
+  .token-stats { grid-column: 1 / -1; grid-template-columns: repeat(3, 1fr); grid-template-rows: none;
+                 grid-auto-flow: row; gap: 10px 12px; align-items: start; }
+  .token-stats > div { display: block; }
+}
 @media (max-width: 760px) {
-  .brand { font-size: 24px; }
-  .updated { width: 100%; order: 3; }
-  .masthead-row { align-items: flex-start; }
-  .masthead-actions { width: 100%; }
-  #refresh { flex: 1; }
-
-  .token-row { grid-template-columns: auto 1fr; gap: 10px 12px; padding: 12px; }
+  .token-row { padding: 12px; }
   .token { min-width: 70px; height: 50px; font-size: 28px; padding-left: 16px; }
-  .token-stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, auto); gap: 8px 12px; justify-content: space-between; }
   .token-stats .stat-time dd { font-size: 26px; }
 
   .feed-table thead { display: none; }
@@ -307,7 +221,7 @@ main > section:first-child { border-top: 0; padding-top: 16px; }
 @media print {
   :root, :root[data-theme="dark"] { color-scheme: light; --bg: #fff; --surface: #fff; --ink: #000; --muted: #444; --line: #ccc; --line-strong: #999; --token-bg: #000; --token-ink: #fff; }
   [style*="--c-l"] { --c: var(--c-l) !important; }
-  .masthead-actions, .controls, .chart-dl, .tools, #show-older, .chart-note { display: none !important; }
+  .controls, .chart-dl, .tools, #show-older, .chart-note { display: none !important; }
   .feed-table tr.older { display: table-row !important; }
   main > section { break-inside: avoid; padding: 14px 0; }
   .chart-wrap, .token-row { border-color: #ccc; }

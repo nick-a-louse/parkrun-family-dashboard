@@ -4,36 +4,42 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Our parkruns</title>
-<meta name="color-scheme" content="light dark">
+<!-- icons: one image (config/icon.*, else static/icon.svg) is both the header logo and the favicon -->
 <link rel="icon" type="image/png" sizes="32x32" href="/brand/icon-32.png?v={{ icon_version }}">
 <link rel="icon" type="image/png" sizes="192x192" href="/brand/icon-192.png?v={{ icon_version }}">
 <link rel="apple-touch-icon" sizes="180x180" href="/brand/icon-180.png?v={{ icon_version }}">
-<link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#17231d">
+<link rel="manifest" href="/manifest.webmanifest?v={{ icon_version }}">
+<meta name="theme-color" content="#1d6b45">
+<!-- theme boot + styles, before first paint (gomez-ui) -->
+<meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="{{ url_for('static', path='gomez-ui.css') }}?v={{ version }}">
 <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}?v={{ version }}">
-<script>
-  // Apply a saved theme before first paint (no flash).
-  try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
-</script>
+<script src="{{ url_for('static', path='gomez-ui.js') }}?v={{ version }}" defer></script>
 </head>
 <body>
 {% set has_results = feed|length > 0 %}
-<header class="masthead">
-  <div class="wrap masthead-row">
-    <h1 class="brand">{% if logo %}Our <span class="brand-logo" role="img" aria-label="parkruns" style="--logo-w: {{ logo.css.width }}ex; --logo-h: {{ logo.css.height }}ex; --logo-drop: {{ logo.css.drop }}ex;"></span>{% else %}Our parkruns{% endif %}</h1>
-    <div class="masthead-actions">
-      <p class="updated" id="updated">
-        {% if status.last_success %}Updated <time datetime="{{ status.last_success }}">{{ status.last_success_text }}</time>{% else %}Not updated yet{% endif %}
-      </p>
+{% set last_failed = status.last_attempt and not status.last_attempt.ok and status.last_attempt.finished_at %}
+<header class="g-header">
+  <div class="wrap g-header-row">
+    <div class="g-brand">
+      <img class="g-app-icon" src="/brand/icon-192.png?v={{ icon_version }}" alt="">
+      <div class="g-titles">
+        <h1 class="g-title">{% if logo %}Our <span class="brand-logo" role="img" aria-label="parkruns" style="--logo-w: {{ logo.css.width }}ex; --logo-h: {{ logo.css.height }}ex; --logo-drop: {{ logo.css.drop }}ex;"></span>{% else %}Our parkruns{% endif %}</h1>
+        {# Green for 8 days (checks only run at weekends), amber to 15 days, red after; red at once if the last check failed. #}
+        <p class="g-updated" id="updated" data-updated="{{ status.last_success or '' }}" data-ok-mins="11520" data-stale-mins="21600"{% if last_failed %} data-error="The last check didn't work: {{ status.last_attempt.message }}"{% endif %}>{% if status.last_success %}Updated {{ status.last_success_text }}{% else %}Not updated yet{% endif %}</p>
+      </div>
+    </div>
+    <div class="g-actions">
       <button class="btn btn-primary" id="refresh" type="button">Check for results</button>
-      <button class="btn btn-icon" id="theme" type="button" aria-label="Switch light or dark theme" title="Switch light or dark theme">
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>
+      <button class="btn btn-icon g-theme" type="button" aria-label="Theme">
+        <svg data-icon="auto" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>
+        <svg data-icon="light" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+        <svg data-icon="dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z" fill="currentColor"/></svg>
       </button>
     </div>
   </div>
-  <div class="wrap"><p class="notice" id="notice" role="status" aria-live="polite"{% if not (status.last_attempt and not status.last_attempt.ok and status.last_attempt.finished_at) %} hidden{% endif %}>
-    {% if status.last_attempt and not status.last_attempt.ok and status.last_attempt.finished_at %}The last check didn't work: {{ status.last_attempt.message }}{% endif %}
-  </p></div>
+  <div class="wrap"><p class="notice" id="notice" role="status" aria-live="polite" hidden></p></div>
 </header>
 
 <main class="wrap">
@@ -224,8 +230,11 @@
   </section>
 </main>
 
-<footer class="wrap foot">
-  <p class="quiet small">Results from <a href="https://www.parkrun.org.uk/" rel="noopener" target="_blank">parkrun</a>, read from each runner's public results page. Not affiliated with parkrun. v{{ version }}</p>
+<footer class="g-footer">
+  <div class="wrap">
+    <span>Our parkruns · v{{ version }}</span>
+    <span>Results from <a href="https://www.parkrun.org.uk/" rel="noopener" target="_blank">parkrun</a>, read from each runner's public results page. Not affiliated with parkrun.</span>
+  </div>
 </footer>
 
 <script id="chart-data" type="application/json">{{ series|tojson }}</script>

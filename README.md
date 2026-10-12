@@ -22,7 +22,11 @@ parkrun has no public API, so the app reads each runner's public results page (`
 
 Milestones: junior parkrun 11 (half marathon), 21 (marathon), 50 (ultra marathon), 100, 250; 5k parkrun 25, 50, 100, 250, 500, 1000, plus 10 for juniors. Junior and 5k runs are counted separately, as parkrun does.
 
-## Set up on a server
+## Why
+
+Three runners, two distances and several parkrun events meant checking separate parkrun pages every weekend to see how everyone did. This puts the whole family's results, PBs and milestones in one place and emails when new results land. It follows the gomez app standard (shared look, GitHub Actions → ghcr.io → Docker on gomez). The standard is in Obsidian: *Atlas/Technology/Server/App standard*. Requirements and decisions are in *Efforts/4 - Projects/Parkrun family dashboard*.
+
+## Set up on gomez
 
 You need Docker and a login to GitHub's container registry (the image is private while the repo is).
 
@@ -33,7 +37,7 @@ You need Docker and a login to GitHub's container registry (the image is private
 2. **Create folders and config.**
    ```bash
    sudo mkdir -p /opt/appdata/parkrun/{data,config}
-   sudo chown 1000:1000 /opt/appdata/parkrun/data
+   sudo chown -R 1003:1006 /opt/appdata/parkrun   # PUID:PGID from .env
    sudo mkdir -p /srv/parkrun && cd /srv/parkrun   # docker-compose.yml and .env live here
    # copy docker-compose.yml, .env.example and config/runners.example.yaml from this repo, then:
    cp .env.example .env            # fill in BASE_URL and the SMTP settings
@@ -59,16 +63,51 @@ The database lives in `/opt/appdata/parkrun/data`, so updates and restarts keep 
 
 Port 5062 on your LAN. For access away from home, use Tailscale to reach the server's Tailscale address on the same port, and set `BASE_URL` to whichever address you want email links to use. The app has no login, so don't expose it to the internet.
 
-## Your own logo and icon
+## Configuration
+
+**Runners** go in `runners.yaml` (see [config/runners.example.yaml](config/runners.example.yaml)). Restart the container after editing. Removing someone hides them; their results stay in the database.
+
+**Settings** are environment variables (see [.env.example](.env.example)):
+
+| Variable | Default | |
+|---|---|---|
+| `BASE_URL` | `http://localhost:8000` | Address used in email links |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | | Your SMTP relay. Email is off when `SMTP_HOST` is empty |
+| `SMTP_STARTTLS` / `SMTP_SSL` | `false` | Encryption for the relay connection |
+| `EMAIL_FROM`, `EMAIL_TO` | | Sender, and comma-separated recipients |
+| `POLL_DAYS`, `POLL_TIMES` | `saturday,sunday` / `11:00,12:30,14:00,17:00,21:00` | Automatic checks (local time) |
+| `CATCHUP` | `monday 08:30` | Weekly re-check for corrected results |
+| `FETCHER` | `http` | `http`, `browser` (use the `:browser` image, which sets it for you) or `manual` |
+| `REQUEST_DELAY` | `3-6` | Random pause between requests, seconds |
+| `REFRESH_COOLDOWN` | `300` | Seconds between manual checks |
+| `FAILURE_ALERT_THRESHOLD` | `3` | Failed checks in a row before a warning email |
+| `TZ` | `Europe/London` | |
+| `PUID`, `PGID` | `1003`, `1006` | The user and group the container runs as (same as the rest of gomez). `/opt/appdata/parkrun` must belong to them |
+| `LOGO_SCALE` | `1` | Size tweak for the header wordmark |
+
+Use **Send a test email** on the dashboard to check the SMTP settings.
+
+### Your own logo and icon
 
 Put image files next to `runners.yaml` (the `/config` folder) and restart the container:
 
 - `logo.png` (or `.svg`/`.webp`): shown in the header as "Our" followed by the logo. The app turns it into a cut-out painted in the page's text colour (so it follows light/dark mode), trims the empty space, and sizes it so the logo's lowercase letters match the height of "Our" and sit on the same baseline. A dark logo on a plain background works best. If it looks too big or small, set `LOGO_SCALE` (e.g. `1.2` or `0.9`) in `.env`. Without a logo the header reads "Our parkruns".
-- `icon.png` or `icon.jpg` (or `.svg`/`.ico`): the browser tab icon and home-screen icon. PNG/JPG icons are trimmed to a small margin, made square, and served at 32, 180, 192 and 512 px; thin line art is thickened at 32 px so it stays visible in a browser tab. Without it a built-in icon is used.
+- `icon.png` or `icon.jpg` (or `.svg`/`.ico`): the square logo at the top left of the header **and** the browser-tab and home-screen icon (the [gomez app standard](#why) uses one image for both). PNG/JPG icons are trimmed to a small margin, made square, and served at 32, 180, 192 and 512 px; thin line art is thickened at 32 px so it stays visible in a browser tab. Without it the built-in icon (`app/static/icon.svg`, a green finish token) is used for both. To match the other gomez apps, use a rounded square in the accent green `#1d6b45` with a simple white symbol.
 
 The repo doesn't include any third-party logos; supply your own files.
 
-## Grafana monitoring (optional)
+### If parkrun blocks requests
+
+parkrun's firewall refuses some automated requests (for example from cloud servers). From a home connection, plain requests normally work. If checks start failing with "parkrun refused the request":
+
+1. Switch to the headless-browser image: set `image: ghcr.io/nick-a-louse/parkrun-family-dashboard:browser` and `FETCHER=browser`, then `docker compose up -d`.
+2. Or import pages by hand: open a runner's results page in your browser, save it (*Save page as… → Web page, HTML only*), and upload it under **Import a saved page**. Event results pages can be imported the same way to fill in gender positions.
+
+## Monitoring
+
+`GET /healthz` returns `{"ok": true, "version": ...}` while the database answers; the Docker healthcheck uses it, so `docker compose ps` shows `healthy`.
+
+### Grafana (optional)
 
 The app publishes Prometheus-format metrics at `/metrics` (`up`, last successful check, failed checks in a row, results per runner, next scheduled check). To have VictoriaMetrics scrape it and Grafana alert on it:
 
@@ -95,35 +134,6 @@ The app publishes Prometheus-format metrics at `/metrics` (`up`, last successful
    ```
    This creates three alert rules in a "Parkrun" group beside your existing alerts, using your existing contact points: **Parkrun Dashboard Down** (not scrapeable for 5 minutes), **Parkrun Checks Failing** (3+ failed checks in a row) and **Parkrun Results Not Updating** (no successful check for 8 days). It also creates a "Parkrun dashboard" in Grafana. It's safe to run again; it updates in place. Use `--url` if Grafana isn't reachable as `http://grafana:3000`.
 
-## Configuration
-
-**Runners** go in `runners.yaml` (see [config/runners.example.yaml](config/runners.example.yaml)). Restart the container after editing. Removing someone hides them; their results stay in the database.
-
-**Settings** are environment variables (see [.env.example](.env.example)):
-
-| Variable | Default | |
-|---|---|---|
-| `BASE_URL` | `http://localhost:8000` | Address used in email links |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | | Your SMTP relay. Email is off when `SMTP_HOST` is empty |
-| `SMTP_STARTTLS` / `SMTP_SSL` | `false` | Encryption for the relay connection |
-| `EMAIL_FROM`, `EMAIL_TO` | | Sender, and comma-separated recipients |
-| `POLL_DAYS`, `POLL_TIMES` | `saturday,sunday` / `11:00,12:30,14:00,17:00,21:00` | Automatic checks (local time) |
-| `CATCHUP` | `monday 08:30` | Weekly re-check for corrected results |
-| `FETCHER` | `http` | `http`, `browser` (use the `:browser` image, which sets it for you) or `manual` |
-| `REQUEST_DELAY` | `3-6` | Random pause between requests, seconds |
-| `REFRESH_COOLDOWN` | `300` | Seconds between manual checks |
-| `FAILURE_ALERT_THRESHOLD` | `3` | Failed checks in a row before a warning email |
-| `TZ` | `Europe/London` | |
-
-Use **Send a test email** on the dashboard to check the SMTP settings.
-
-## If parkrun blocks requests
-
-parkrun's firewall refuses some automated requests (for example from cloud servers). From a home connection, plain requests normally work. If checks start failing with "parkrun refused the request":
-
-1. Switch to the headless-browser image: set `image: ghcr.io/nick-a-louse/parkrun-family-dashboard:browser` and `FETCHER=browser`, then `docker compose up -d`.
-2. Or import pages by hand: open a runner's results page in your browser, save it (*Save page as… → Web page, HTML only*), and upload it under **Import a saved page**. Event results pages can be imported the same way to fill in gender positions.
-
 ## Development
 
 ```bash
@@ -139,7 +149,15 @@ DB_PATH=/tmp/demo.db RUNNERS_FILE=config/runners.demo.yaml SCHEDULER_ENABLED=fal
 
 Test fixtures in `tests/fixtures` are anonymised copies of real parkrun page structures. Pushing to `main` runs the tests and publishes `:latest` and `:browser` images to ghcr.io.
 
+## Files
+
 ```
+.github/workflows/build.yml   tests, then builds :latest and :browser images to ghcr.io
+Dockerfile, Dockerfile.browser
+docker-compose.yml            what runs on gomez (/srv/parkrun)
+config/                       example runners.yaml files
+scripts/demo_data.py          made-up data for trying the dashboard
+tests/                        pytest, with anonymised parkrun page fixtures
 app/
   parser.py     read parkrunner and event results pages
   fetcher.py    polite HTTP / headless-browser / manual fetchers
@@ -149,6 +167,10 @@ app/
   notify.py     email
   exports.py    CSV / JSON / Excel
   main.py       web app and API
+  branding.py   your logo and icon, sized for the header and every icon size
+  metrics.py    /metrics for VictoriaMetrics
+  static/       gomez-ui.css and gomez-ui.js (shared look, copied unchanged), app.css, app.js, fonts
 ```
+
 
 Not affiliated with parkrun. Results are parkrun's; this only reads public pages for personal use.

@@ -1,4 +1,5 @@
-/* parkrun family dashboard: theme, refresh, import, results feed and the trends chart. */
+/* parkrun family dashboard: refresh, import, results feed and the trends chart.
+   Theme control and the "Updated" line come from gomez-ui.js. */
 (function () {
   "use strict";
   var $ = function (s, el) { return (el || document).querySelector(s); };
@@ -6,20 +7,14 @@
   var root = document.documentElement;
 
   /* ------------------------------------------------------------------ theme */
+  // The theme button and its storage live in gomez-ui.js; the chart just redraws.
   var media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
   function isDark() {
+    if (window.gomezUI) return window.gomezUI.isDark();
     var t = root.dataset.theme;
-    if (t === "dark") return true;
-    if (t === "light") return false;
-    return !!(media && media.matches);
+    return t ? t === "dark" : !!(media && media.matches);
   }
-  $("#theme").addEventListener("click", function () {
-    var next = isDark() ? "light" : "dark";
-    root.dataset.theme = next;
-    try { localStorage.setItem("theme", next); } catch (e) {}
-    drawChart();
-  });
-  if (media && media.addEventListener) media.addEventListener("change", function () { drawChart(); });
+  document.addEventListener("g:themechange", function () { drawChart(); });
 
   /* ------------------------------------------------------------------ notices */
   var notice = $("#notice");
@@ -48,6 +43,8 @@
         setTimeout(function () { location.reload(); }, last.new_results ? 900 : 2500);
       } else {
         say("The check didn't work: " + last.message, true);
+        var upd = $("#updated");
+        if (upd && window.gomezUI) window.gomezUI.setUpdated(upd, undefined, "The last check didn't work: " + last.message);
       }
     }).catch(function () { setTimeout(function () { waitForSync(afterId); }, 4000); });
   }

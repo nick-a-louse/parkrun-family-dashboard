@@ -38,7 +38,8 @@ def render(db: Database, runners: list[Runner], running: bool, next_run: datetim
     counts = {r["ok"]: r["n"] for r in db.query(
         "SELECT ok, COUNT(*) AS n FROM fetch_log WHERE finished_at IS NOT NULL AND trigger != 'import' GROUP BY ok")}
 
-    metric("parkrun_info", "Build information.", "gauge", [({"version": __version__}, 1)])
+    metric("parkrun_build_info", "Build information (gomez app standard name).", "gauge", [({"version": __version__}, 1)])
+    metric("parkrun_info", "Build information (kept for existing Grafana panels).", "gauge", [({"version": __version__}, 1)])
     metric("parkrun_last_success_timestamp_seconds", "When the last fully successful check finished (Unix time).",
            "gauge", [({}, _ts(db.get_state("last_success")))])
     metric("parkrun_last_check_timestamp_seconds", "When the last check finished (Unix time).",

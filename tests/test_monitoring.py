@@ -140,3 +140,20 @@ def test_grafana_setup(monkeypatch, capsys):
 def test_grafana_setup_needs_password(monkeypatch):
     monkeypatch.delenv("GRAFANA_PASSWORD", raising=False)
     assert grafana_setup.main([]) == 2
+
+
+def test_gomez_standard_page(env, fixtures):
+    """gomez app standard (TECH-P8): shared look, header logo = favicon, Updated line, version."""
+    c = TestClient(create_app(fetcher_factory=lambda: FakeFetcher({})))
+    page = c.get("/").text
+    assert "gomez-ui.css" in page and "gomez-ui.js" in page
+    assert 'class="g-header"' in page and 'class="btn btn-icon g-theme"' in page
+    assert 'class="g-updated" id="updated"' in page and 'data-ok-mins="11520"' in page
+    # one image is both the header logo and the favicon
+    assert 'class="g-app-icon" src="/brand/icon-192.png?v=' in page and 'rel="icon" type="image/png" sizes="192x192" href="/brand/icon-192.png?v=' in page
+    assert '<meta name="theme-color" content="#1d6b45">' in page
+    from app import __version__
+    assert f"v{__version__}" in page
+    assert c.get("/static/gomez-ui.css").status_code == 200
+    assert "parkrun_build_info" in c.get("/metrics").text
+    assert c.get("/manifest.webmanifest").json()["theme_color"] == "#1d6b45"

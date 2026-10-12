@@ -4,9 +4,15 @@ services:
     # Use :browser instead if parkrun blocks plain requests (and set FETCHER=browser)
     container_name: parkrun
     restart: unless-stopped
+    user: "${PUID:-1003}:${PGID:-1006}"   # PUID/PGID live in .env, like the linuxserver containers
     env_file: .env
     ports:
       - "5062:8000"
     volumes:
       - /opt/appdata/parkrun/data:/data
       - /opt/appdata/parkrun/config:/config:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

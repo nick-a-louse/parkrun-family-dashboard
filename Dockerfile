@@ -5,6 +5,8 @@ ARG VERSION=dev
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    APP_VERSION=$VERSION \
+    HOME=/tmp \
     TZ=Europe/London \
     DB_PATH=/data/parkrun.db \
     RUNNERS_FILE=/config/runners.yaml
@@ -14,10 +16,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
-RUN useradd --system --uid 1000 --home /app parkrun \
- && mkdir -p /data /config && chown parkrun /data /config
+# Runs as PUID 1003 / PGID 1006 on gomez (gomez app standard). Compose sets it via user:;
+# this default keeps the image non-root when run without compose.
+RUN mkdir -p /data /config && chown 1003:1006 /data /config
 
-USER parkrun
+USER 1003:1006
 VOLUME ["/data"]
 EXPOSE 8000
 LABEL org.opencontainers.image.title="parkrun family dashboard" \

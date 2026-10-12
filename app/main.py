@@ -198,7 +198,7 @@ def create_app(settings=None, fetcher_factory=None) -> FastAPI:
         v = int(brand_file("icon").stat().st_mtime) if brand_file("icon") else 0
         return JSONResponse({
             "name": "Our parkruns", "short_name": "parkruns", "start_url": "/", "display": "standalone",
-            "background_color": "#eef1ec", "theme_color": "#17231d",
+            "background_color": "#f5f5f2", "theme_color": "#1d6b45",
             "icons": [{"src": f"/brand/icon-{s}.png?v={v}", "sizes": f"{s}x{s}", "type": "image/png",
                        "purpose": "any"} for s in (192, 512)],
         }, media_type="application/manifest+json")
