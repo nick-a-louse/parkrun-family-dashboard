@@ -29,8 +29,6 @@
 :root[data-theme="dark"] [style*="--c-l"] { --c: var(--c-d); }
 
 h3, h4, dl, dd, ol, ul { margin: 0; }
-.num { text-align: right; font-family: inherit; font-weight: inherit; }  /* here .num means a right-aligned number cell;
-   big figures set font-family: var(--font-num) themselves */
 .empty { color: var(--muted); max-width: 60ch; }
 
 /* ---------------------------------------------------------------- header extras */

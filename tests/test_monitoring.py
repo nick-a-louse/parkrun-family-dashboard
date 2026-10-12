@@ -154,6 +154,7 @@ def test_gomez_standard_page(env, fixtures):
     assert '<meta name="theme-color" content="#1d6b45">' in page
     from app import __version__
     assert f"v{__version__}" in page
-    assert c.get("/static/gomez-ui.css").status_code == 200
+    css = c.get("/static/gomez-ui.css")
+    assert css.status_code == 200 and "gomez-ui v1.1" in css.text and ".g-figure" in css.text
     assert "parkrun_build_info" in c.get("/metrics").text
     assert c.get("/manifest.webmanifest").json()["theme_color"] == "#1d6b45"
