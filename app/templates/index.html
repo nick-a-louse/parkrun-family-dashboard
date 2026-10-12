@@ -174,9 +174,9 @@
           <td class="c-event" data-label="Event"><a href="{{ r.url }}" rel="noopener" target="_blank">{{ r.event_name }}</a> <span class="quiet">#{{ r.run_number }} · {{ r.distance }}</span></td>
           <td class="num c-time" data-label="Time">{{ r.time }}</td>
           <td class="num c-pace" data-label="Pace">{{ r.pace }}</td>
-          <td class="num" data-label="Overall">{{ r.position or '–' }}{% if r.finishers %}<span class="of">/{{ r.finishers }}</span>{% endif %}</td>
-          <td class="num" data-label="{{ r.gender or 'Gender' }}">{{ r.gender_position or '–' }}{% if r.gender_count %}<span class="of">/{{ r.gender_count }}</span>{% endif %}</td>
-          <td class="num" data-label="Age grade">{{ '%.2f%%' % r.age_grade if r.age_grade else '–' }}</td>
+          <td class="num c-overall" data-label="Overall"><span class="fr-n">{{ r.position or '–' }}</span><span class="fr-d of">{% if r.finishers %}/{{ r.finishers }}{% endif %}</span></td>
+          <td class="num c-gender" data-label="{{ r.gender or 'Gender' }}"><span class="fr-n">{{ r.gender_position or '–' }}</span><span class="fr-d of">{% if r.gender_count %}/{{ r.gender_count }}{% endif %}</span></td>
+          <td class="num c-age" data-label="Age grade">{{ '%.2f%%' % r.age_grade if r.age_grade else '–' }}</td>
         </tr>
       {% endfor %}
       </tbody>
