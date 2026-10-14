@@ -24,9 +24,9 @@ Milestones: junior parkrun 11 (half marathon), 21 (marathon), 50 (ultra marathon
 
 ## Why
 
-Three runners, two distances and several parkrun events meant checking separate parkrun pages every weekend to see how everyone did. This puts the whole family's results, PBs and milestones in one place and emails when new results land. It follows the gomez app standard (shared look, GitHub Actions → ghcr.io → Docker on gomez). The standard is in Obsidian: *Atlas/Technology/Server/App standard*. Requirements and decisions are in *Efforts/4 - Projects/Parkrun family dashboard*.
+Three runners, two distances and several parkrun events meant checking separate parkrun pages every weekend to see how everyone did. This puts the whole family's results, PBs and milestones in one place and emails when new results land. It follows my shared app standard (see [How this was built](#how-this-was-built)).
 
-## Set up on gomez
+## Set up (Docker)
 
 You need Docker and a login to GitHub's container registry (the image is private while the repo is).
 
@@ -82,7 +82,7 @@ Port 5062 on your LAN. For access away from home, use Tailscale to reach the ser
 | `REFRESH_COOLDOWN` | `300` | Seconds between manual checks |
 | `FAILURE_ALERT_THRESHOLD` | `3` | Failed checks in a row before a warning email |
 | `TZ` | `Europe/London` | |
-| `PUID`, `PGID` | `1003`, `1006` | The user and group the container runs as (same as the rest of gomez). `/opt/appdata/parkrun` must belong to them |
+| `PUID`, `PGID` | `1003`, `1006` | The user and group the container runs as (same as my other containers). `/opt/appdata/parkrun` must belong to them |
 | `LOGO_SCALE` | `1` | Size tweak for the header wordmark |
 
 Use **Send a test email** on the dashboard to check the SMTP settings.
@@ -92,7 +92,7 @@ Use **Send a test email** on the dashboard to check the SMTP settings.
 Put image files next to `runners.yaml` (the `/config` folder) and restart the container:
 
 - `logo.png` (or `.svg`/`.webp`): shown in the header as "Our" followed by the logo. The app turns it into a cut-out painted in the page's text colour (so it follows light/dark mode), trims the empty space, and sizes it so the logo's lowercase letters match the height of "Our" and sit on the same baseline. A dark logo on a plain background works best. If it looks too big or small, set `LOGO_SCALE` (e.g. `1.2` or `0.9`) in `.env`. Without a logo the header reads "Our parkruns".
-- `icon.png` or `icon.jpg` (or `.svg`/`.ico`): the square logo at the top left of the header **and** the browser-tab and home-screen icon (the [gomez app standard](#why) uses one image for both). PNG/JPG icons are trimmed to a small margin, made square, and served at 32, 180, 192 and 512 px; thin line art is thickened at 32 px so it stays visible in a browser tab. Without it the built-in icon (`app/static/icon.svg`, a green finish token) is used for both. To match the other gomez apps, use a rounded square in the accent green `#1d6b45` with a simple white symbol.
+- `icon.png` or `icon.jpg` (or `.svg`/`.ico`): the square logo at the top left of the header **and** the browser-tab and home-screen icon (my [app standard](#how-this-was-built) uses one image for both). PNG/JPG icons are trimmed to a small margin, made square, and served at 32, 180, 192 and 512 px; thin line art is thickened at 32 px so it stays visible in a browser tab. Without it the built-in icon (`app/static/icon.svg`, a green finish token) is used for both. To match my other apps, use a rounded square in the accent green `#1d6b45` with a simple white symbol.
 
 The repo doesn't include any third-party logos; supply your own files.
 
@@ -154,7 +154,7 @@ Test fixtures in `tests/fixtures` are anonymised copies of real parkrun page str
 ```
 .github/workflows/build.yml   tests, then builds :latest and :browser images to ghcr.io
 Dockerfile, Dockerfile.browser
-docker-compose.yml            what runs on gomez (/srv/parkrun)
+docker-compose.yml            what runs on the server (/srv/parkrun)
 config/                       example runners.yaml files
 scripts/demo_data.py          made-up data for trying the dashboard
 tests/                        pytest, with anonymised parkrun page fixtures
@@ -174,3 +174,17 @@ app/
 
 
 Not affiliated with parkrun. Results are parkrun's; this only reads public pages for personal use.
+
+## How this was built
+
+This is one of several self-hosted apps I run at home. The code was written by Claude (an AI coding agent) under my direction. My part was the requirements, the standards, the review and the decisions:
+
+- **Requirements first.** Functional and non-functional requirements were agreed as tickets in Obsidian before any code was written.
+- **One shared standard.** All my apps share one look, one repo layout and one build-and-deploy pipeline (GitHub Actions → GitHub Container Registry → Docker Compose). `gomez-ui.css` and `gomez-ui.js` are the shared UI kit from that standard; gomez is my home server's name.
+- **Reviewed before merging.** Every change came in as a pull request, with screenshots at desktop and phone widths in light and dark mode, and was merged only after I'd reviewed it and the tests passed.
+
+More on how I work this way: [my GitHub profile](https://github.com/nick-a-louse).
+
+## Licence
+
+[MIT](LICENSE). Fonts are Barlow and Barlow Condensed under the SIL Open Font License (see the `OFL.txt` next to them).

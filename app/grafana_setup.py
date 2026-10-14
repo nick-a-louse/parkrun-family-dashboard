@@ -106,7 +106,7 @@ def alert_rules(ds_uid: str, folder_uid: str) -> list[dict]:
         rule("parkrun-down", "Parkrun Dashboard Down", 'up{job="parkrun"}', "lt", 1, "5m", "Alerting",
              "The parkrun dashboard isn't responding",
              "VictoriaMetrics can't reach the parkrun container. Check `docker ps` and "
-             "`docker logs parkrun` on gomez; restart with `cd /srv/parkrun && docker compose up -d`."),
+             "`docker logs parkrun` on the server; restart with `cd /srv/parkrun && docker compose up -d`."),
         rule("parkrun-failing", "Parkrun Checks Failing", "parkrun_consecutive_failures", "gt", 2, "1m", "OK",
              "3 or more parkrun checks in a row have failed",
              "See 'Recent checks' on the dashboard. If parkrun is refusing requests, switch to the "
