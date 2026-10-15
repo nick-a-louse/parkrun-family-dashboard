@@ -1,5 +1,10 @@
 # parkrun family dashboard
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/desktop-dark.png">
+  <img alt="The dashboard: the latest weekend's results, then each runner's personal bests, streaks and averages" src="docs/screenshots/desktop-light.png">
+</picture>
+
 A small self-hosted web app that shows a family's parkrun results in one place: the latest weekend, personal bests, trends, run counts, streaks and milestones, for 5k parkrun and 2k junior parkrun. It checks parkrun automatically at weekends, emails you when new results land, and runs as a single Docker container.
 
 parkrun has no public API, so the app reads each runner's public results page (`/parkrunner/<id>/all/`) and, for gender position, the event's results page. It does this politely: a few requests per check, a pause of a few seconds between each, and only at weekends.
@@ -21,6 +26,15 @@ parkrun has no public API, so the app reads each runner's public results page (`
 | Home Assistant | `GET /api/latest` and `GET /api/summary` (JSON) |
 
 Milestones: junior parkrun 11 (half marathon), 21 (marathon), 50 (ultra marathon), 100, 250; 5k parkrun 25, 50, 100, 250, 500, 1000, plus 10 for juniors. Junior and 5k runs are counted separately, as parkrun does.
+
+## On a phone
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/phone-dark.png">
+  <img alt="The dashboard on a phone, with each result's figures stacked under the runner" src="docs/screenshots/phone-light.png" width="300">
+</picture>
+
+The screenshots show made-up runners from `scripts/demo_data.py`. They follow your GitHub theme, light or dark, like the app itself.
 
 ## Why
 
@@ -152,6 +166,7 @@ Test fixtures in `tests/fixtures` are anonymised copies of real parkrun page str
 ## Files
 
 ```
+docs/screenshots/             the pictures in this README (light and dark, desktop and phone)
 .github/workflows/build.yml   tests, then builds :latest and :browser images to ghcr.io
 Dockerfile, Dockerfile.browser
 docker-compose.yml            what runs on the server (/srv/parkrun)
