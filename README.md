@@ -42,13 +42,9 @@ Three runners, two distances and several parkrun events meant checking separate 
 
 ## Set up (Docker)
 
-You need Docker and a login to GitHub's container registry (the image is private while the repo is).
+You need Docker.
 
-1. **Log in to ghcr.io once.** Create a GitHub personal access token (classic) with only the `read:packages` scope, then:
-   ```bash
-   echo <token> | docker login ghcr.io -u nick-a-louse --password-stdin
-   ```
-2. **Create folders and config.**
+1. **Create folders and config.**
    ```bash
    sudo mkdir -p /opt/appdata/parkrun/{data,config}
    sudo chown -R 1003:1006 /opt/appdata/parkrun   # PUID:PGID from .env
@@ -57,7 +53,7 @@ You need Docker and a login to GitHub's container registry (the image is private
    cp .env.example .env            # fill in BASE_URL and the SMTP settings
    sudo cp config/runners.example.yaml /opt/appdata/parkrun/config/runners.yaml   # add your runners
    ```
-3. **Start it.**
+2. **Start it.**
    ```bash
    docker compose up -d
    docker compose logs -f parkrun
